@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import JourneysListScreen from "../screens/journeys/JourneyListScreen";
 import JourneyTabsScreen from "./JourneyTabsScreen";
+import JourneyLegListScreen from "../screens/journeys/journeyLegListScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -12,6 +13,7 @@ export default function AppNavigator() {
         component={JourneysListScreen}
         options={{ title: "My Journeys" }}
       />
+      <Stack.Screen name="JourneyLeg" component={JourneyLegListScreen} />
       <Stack.Screen
         name="JourneyTabs"
         component={JourneyTabsScreen}

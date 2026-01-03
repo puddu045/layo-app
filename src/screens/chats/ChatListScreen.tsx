@@ -1,17 +1,73 @@
-import { View, Text } from "react-native";
-import { useJourneyStore } from "../../store/journey.store";
+import React, { useCallback, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { fetchChatsByJourneyLeg } from "../../api/chats.api";
+import { useChatStore } from "../../store/chat.store";
+import ChatRow from "../../components/ChatRow";
 
-export default function ChatListScreen() {
-  const activeJourney = useJourneyStore((s) => s.activeJourney);
+export default function ChatListScreen({ navigation, route }: any) {
+  const journeyLegId = route?.params?.journeyLegId;
+  const { chats, setChats, loading, setLoading } = useChatStore();
 
-  if (!activeJourney) {
+  const loadChats = async () => {
+    if (!journeyLegId) return;
+
+    try {
+      setLoading(true);
+      const data = await fetchChatsByJourneyLeg(journeyLegId);
+      setChats(data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load when journey changes
+  useEffect(() => {
+    loadChats();
+  }, [journeyLegId]);
+
+  // Reload when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadChats();
+    }, [journeyLegId])
+  );
+
+  // Polling (every 15 seconds)
+  useEffect(() => {
+    if (!journeyLegId) return;
+
+    const interval = setInterval(loadChats, 15000);
+    return () => clearInterval(interval);
+  }, [journeyLegId]);
+
+  if (!journeyLegId) {
     return <Text>Select a journey first</Text>;
   }
 
+  if (loading && chats.length === 0) {
+    return <ActivityIndicator style={{ marginTop: 40 }} />;
+  }
+
   return (
-    <View>
-      <Text>Chats for journey:</Text>
-      <Text>{activeJourney.name}</Text>
-    </View>
+    <FlatList
+      data={chats}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <ChatRow
+          chat={item}
+          onPress={() => navigation.navigate("Chat", { chatId: item.id })}
+        />
+      )}
+      ListEmptyComponent={
+        <Text style={{ textAlign: "center", marginTop: 40 }}>No chats yet</Text>
+      }
+    />
   );
 }

@@ -4,11 +4,21 @@ import MatchListScreen from "../screens/matches/MatchListScreen";
 
 const Tab = createBottomTabNavigator();
 
-export default function JourneyTabsScreen() {
+export default function JourneyTabsScreen({ route }: any) {
+  const { journeyLegId } = route.params;
+
   return (
     <Tab.Navigator initialRouteName="Chats">
-      <Tab.Screen name="Chats" component={ChatListScreen} />
-      <Tab.Screen name="Matches" component={MatchListScreen} />
+      <Tab.Screen
+        name="Chats"
+        component={ChatListScreen}
+        initialParams={{ journeyLegId }}
+      />
+      <Tab.Screen
+        name="Matches"
+        component={MatchListScreen}
+        initialParams={{ journeyLegId }}
+      />
     </Tab.Navigator>
   );
 }
