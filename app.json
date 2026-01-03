@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "layo-app",
-    "slug": "layo-app",
+    "name": "Layo",
+    "slug": "Layo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Layo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/Layo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#8B5CF6"
     },
     "ios": {
       "supportsTablet": true
@@ -21,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.Layo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
