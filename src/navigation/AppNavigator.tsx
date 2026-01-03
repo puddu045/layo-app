@@ -1,12 +1,22 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "../screens/home/HomeScreen";
+import JourneysListScreen from "../screens/journeys/JourneyListScreen";
+import JourneyTabsScreen from "./JourneyTabsScreen";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen
+        name="Journeys"
+        component={JourneysListScreen}
+        options={{ title: "My Journeys" }}
+      />
+      <Stack.Screen
+        name="JourneyTabs"
+        component={JourneyTabsScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
