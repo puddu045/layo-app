@@ -1,13 +1,13 @@
 import { FlatList, Text, View } from "react-native";
-import { useMatchStore } from "../../store/match.store";
-import { fetchMatchesByJourneyLeg } from "../../api/matches.api";
+import { fetchPendingRequestsByJourneyLeg } from "../../api/matches.api";
 import { useEffect } from "react";
+import { useRequestStore } from "../../store/request.store";
 
-export default function MatchListScreen({ navigation, route }: any) {
+export default function RequestListScreen({ navigation, route }: any) {
   const journeyLegId = route?.params?.journeyLegId;
-  const matchState = useMatchStore((s) => s.matchesByLegId[journeyLegId]);
-  const setMatchesForLeg = useMatchStore((s) => s.setMatchesForLeg);
-  const setLoadingForLeg = useMatchStore((s) => s.setLoadingForLeg);
+  const requestState = useRequestStore((s) => s.requestsByLegId[journeyLegId]);
+  const setRequestsForLeg = useRequestStore((s) => s.setRequestsForLeg);
+  const setLoadingForLeg = useRequestStore((s) => s.setLoadingForLeg);
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
@@ -28,25 +28,25 @@ export default function MatchListScreen({ navigation, route }: any) {
   useEffect(() => {
     const load = async () => {
       setLoadingForLeg(journeyLegId, true);
-      const data = await fetchMatchesByJourneyLeg(journeyLegId);
-      setMatchesForLeg(journeyLegId, data);
+      const data = await fetchPendingRequestsByJourneyLeg(journeyLegId);
+      setRequestsForLeg(journeyLegId, data);
     };
 
     load();
   }, [journeyLegId]);
 
-  if (!matchState || matchState.loading) {
+  if (!requestState || requestState.loading) {
     return <Text>Loading matches...</Text>;
   }
 
   return (
     <FlatList
-      data={matchState.data}
+      data={requestState.data}
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
-        const dep = formatDateTime(item.departureTime);
-        const arr = formatDateTime(item.arrivalTime);
+        const dep = formatDateTime(item.senderJourneyLeg.departureTime);
+        const arr = formatDateTime(item.senderJourneyLeg.arrivalTime);
 
         return (
           <View
@@ -76,18 +76,36 @@ export default function MatchListScreen({ navigation, route }: any) {
               <Text style={{ fontSize: 18 }}>✈️</Text>
             </View>
 
-            {/* Match details */}
+            {/* Request details */}
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                {item.journey.user.firstName} {item.journey.user.lastName}
+                {item.sender.firstName} {item.sender.lastName}
               </Text>
 
               <Text style={{ color: "#555", marginTop: 4 }}>
-                {item.departureAirport} → {item.arrivalAirport}
+                {item.senderJourneyLeg.departureAirport} →{" "}
+                {item.senderJourneyLeg.arrivalAirport}
               </Text>
 
               <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
                 {dep.date} · {dep.time} → {arr.time}
+              </Text>
+
+              {/* Status */}
+              <Text
+                style={{
+                  marginTop: 6,
+                  fontSize: 12,
+                  fontWeight: "500",
+                  color:
+                    item.status === "PENDING"
+                      ? "#d97706"
+                      : item.status === "ACCEPTED"
+                      ? "#15803d"
+                      : "#b91c1c",
+                }}
+              >
+                {item.status}
               </Text>
             </View>
           </View>
