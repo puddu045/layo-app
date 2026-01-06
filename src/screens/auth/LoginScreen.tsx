@@ -2,16 +2,25 @@ import { View, Text, Button, TextInput } from "react-native";
 import { loginApi } from "../../api/auth.api";
 import { useAuthStore } from "../../store/auth.store";
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const navigation = useNavigation<any>();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    const data = await loginApi(email, password);
-    setAuth(data.accessToken, data.user);
+    setError("");
+
+    try {
+      const data = await loginApi(email, password);
+      setAuth(data.accessToken, data.user);
+    } catch (err) {
+      setError("Invalid email or password");
+    }
   };
 
   return (
@@ -19,11 +28,14 @@ export default function LoginScreen() {
       style={{
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
         padding: 16,
       }}
     >
       <Text style={{ fontSize: 18, marginBottom: 16 }}>Login</Text>
+
+      {error ? (
+        <Text style={{ color: "red", marginBottom: 12 }}>{error}</Text>
+      ) : null}
 
       <TextInput
         placeholder="Email"
@@ -31,14 +43,7 @@ export default function LoginScreen() {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
-        style={{
-          width: "100%",
-          borderWidth: 1,
-          borderColor: "#ccc",
-          padding: 12,
-          marginBottom: 12,
-          borderRadius: 6,
-        }}
+        style={inputStyle}
       />
 
       <TextInput
@@ -46,17 +51,25 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        style={{
-          width: "100%",
-          borderWidth: 1,
-          borderColor: "#ccc",
-          padding: 12,
-          marginBottom: 16,
-          borderRadius: 6,
-        }}
+        style={inputStyle}
       />
 
       <Button title="Login" onPress={handleLogin} />
+
+      <Text
+        style={{ marginTop: 16, color: "blue" }}
+        onPress={() => navigation.navigate("Register")}
+      >
+        Don’t have an account? Register
+      </Text>
     </View>
   );
 }
+
+const inputStyle = {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  padding: 12,
+  marginBottom: 12,
+  borderRadius: 6,
+};

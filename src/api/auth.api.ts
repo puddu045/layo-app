@@ -10,15 +10,15 @@ export const logoutApi = async () => {
   return res.data;
 };
 
-export const registerApi = async (
-  email: string,
-  password: string,
-  name: string
-) => {
-  const res = await api.post("/auth/register", {
-    email,
-    password,
-    name,
-  });
+type RegisterPayload = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  dateOfBirth: string; // YYYY-MM-DD
+};
+
+export const registerApi = async (payload: RegisterPayload) => {
+  const res = await api.post("/auth/register", payload);
   return res.data;
 };

@@ -1,4 +1,4 @@
-import { View, Text, Button, FlatList, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable } from "react-native";
 import { useJourneyStore } from "../../store/journey.store";
 import { getJourneysForUser } from "../../api/journeys.api";
 import { useCallback, useEffect } from "react";
@@ -7,12 +7,13 @@ import { useAuthStore } from "../../store/auth.store";
 import { logoutApi } from "../../api/auth.api";
 
 export default function JourneyListScreen({ navigation }: any) {
-  const { journeys, setJourneys, setActiveJourney, loading, setLoading } =
+  const { journeys, setJourneys, setActiveJourney, setLoading } =
     useJourneyStore();
 
-  const cleartAuth = useAuthStore((s) => s.clearAuth);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+
   async function logout() {
-    cleartAuth();
+    clearAuth();
     await logoutApi();
   }
 
@@ -28,7 +29,6 @@ export default function JourneyListScreen({ navigation }: any) {
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
-
     return {
       date: d.toLocaleDateString([], {
         day: "2-digit",
@@ -53,38 +53,107 @@ export default function JourneyListScreen({ navigation }: any) {
   );
 
   return (
-    <View>
+    <View style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
+      {/* Header */}
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 20, fontWeight: "600" }}>My Journeys</Text>
+
+        <Pressable onPress={logout}>
+          <Text style={{ color: "#b91c1c", fontWeight: "500" }}>Logout</Text>
+        </Pressable>
+      </View>
+
+      {/* Journey list */}
       <FlatList
         data={journeys}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => {
-              setActiveJourney(item);
-              navigation.navigate("JourneyLeg");
-            }}
-            style={{
-              padding: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: "#e0e0e0",
-            }}
-          >
-            {/* Route */}
-            <Text style={{ marginTop: 4 }}>
-              {item.departureAirport} → {item.arrivalAirport}
-            </Text>
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        renderItem={({ item }) => {
+          const dep = formatDateTime(item.departureTime);
+          const arr = formatDateTime(item.arrivalTime);
 
-            {/* Times */}
-            <Text style={{ marginTop: 2, color: "#666" }}>
-              {formatDateTime(item.departureTime).date}{" "}
-              {formatDateTime(item.departureTime).time} –{" "}
-              {formatDateTime(item.arrivalTime).date}{" "}
-              {formatDateTime(item.arrivalTime).time}
-            </Text>
-          </Pressable>
-        )}
+          return (
+            <Pressable
+              onPress={() => {
+                setActiveJourney(item);
+                navigation.navigate("JourneyLeg");
+              }}
+              style={{
+                flexDirection: "row",
+                padding: 14,
+                marginBottom: 12,
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                elevation: 2,
+              }}
+            >
+              {/* Airplane window icon */}
+              <View
+                style={{
+                  width: 52,
+                  height: 70,
+                  borderRadius: 26,
+                  backgroundColor: "#e6eef7",
+                  marginRight: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderWidth: 2,
+                  borderColor: "#c9d8eb",
+                }}
+              >
+                <Text style={{ fontSize: 18 }}>✈️</Text>
+              </View>
+
+              {/* Journey details */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                  {item.departureAirport} → {item.arrivalAirport}
+                </Text>
+
+                <Text style={{ color: "#666", marginTop: 4, fontSize: 13 }}>
+                  {dep.date} · {dep.time}
+                </Text>
+
+                <Text style={{ color: "#666", marginTop: 2, fontSize: 13 }}>
+                  {arr.date} · {arr.time}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        }}
       />
-      <Button title="Logout" onPress={logout} />
+
+      {/* Add Journey button */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 20,
+          alignSelf: "center",
+        }}
+      >
+        <Pressable
+          onPress={() => navigation.navigate("AddJourney")}
+          style={{
+            backgroundColor: "#2563eb",
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 24,
+            elevation: 4,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>
+            + Add Journey
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

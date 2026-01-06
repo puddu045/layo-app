@@ -4,10 +4,13 @@ import { useAuthStore } from "../store/auth.store";
 import AuthNavigator from "./AuthNavigator";
 import AppNavigator from "./AppNavigator";
 import axios from "axios";
+import api from "../api/client";
 
 export default function RootNavigator() {
-  const { isAuthenticated, setAuth, clearAuth } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -17,18 +20,23 @@ export default function RootNavigator() {
           {},
           { withCredentials: true }
         );
-        setAuth(res.data.accessToken, res.data.user);
+        const meRes = await api.get("/users/user", {
+          headers: {
+            Authorization: `Bearer ${res.data.accessToken}`,
+          },
+        });
+        setAuth(res.data.accessToken, meRes.data);
       } catch {
         clearAuth();
-      } finally {
-        setLoading(false);
       }
     };
 
     bootstrap();
   }, []);
 
-  if (loading) return null;
+  if (!isBootstrapped) {
+    return null; // or a Splash screen
+  }
 
   return (
     <NavigationContainer>
