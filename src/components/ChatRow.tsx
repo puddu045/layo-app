@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { useAuthStore } from "../store/auth.store";
 
-export default function ChatRow({ chat, onPress }: any) {
+export default function ChatRow({ chat, onPress, onSelectUser }: any) {
   const user = useAuthStore((s) => s.user);
   if (!user) {
     // Render skeleton / placeholder safely
@@ -16,7 +16,10 @@ export default function ChatRow({ chat, onPress }: any) {
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={() => {
+        onSelectUser?.(showUser.firstName);
+        onPress();
+      }}
       style={{
         flexDirection: "row",
         padding: 16,
@@ -25,7 +28,9 @@ export default function ChatRow({ chat, onPress }: any) {
       }}
     >
       <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: "600" }}>{showUser.firstName}</Text>
+        <Text style={{ fontWeight: "600" }}>
+          {[showUser.firstName, showUser.lastName].filter(Boolean).join(" ")}
+        </Text>
 
         <Text numberOfLines={1} style={{ color: "#666" }}>
           {chat.lastMessage?.text ?? "No messages yet"}

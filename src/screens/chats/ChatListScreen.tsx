@@ -10,6 +10,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { fetchChatsByJourneyLeg } from "../../api/chats.api";
 import { useChatStore } from "../../store/chat.store";
 import ChatRow from "../../components/ChatRow";
+import { useAuthStore } from "../../store/auth.store";
 
 export default function ChatListScreen({ navigation, route }: any) {
   const journeyLegId = route?.params?.journeyLegId;
@@ -62,7 +63,13 @@ export default function ChatListScreen({ navigation, route }: any) {
       renderItem={({ item }) => (
         <ChatRow
           chat={item}
-          onPress={() => navigation.navigate("Chat", { chatId: item.id })}
+          onSelectUser={(firstName: string) => {
+            navigation.navigate("Chat", {
+              chatId: item.id,
+              name: firstName,
+            });
+          }}
+          onPress={() => {}}
         />
       )}
       ListEmptyComponent={

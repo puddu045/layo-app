@@ -1,4 +1,4 @@
-import { View, Text, Button, TextInput } from "react-native";
+import { View, Text, Button, TextInput, ImageBackground } from "react-native";
 import { loginApi } from "../../api/auth.api";
 import { useAuthStore } from "../../store/auth.store";
 import { useState } from "react";
@@ -57,7 +57,7 @@ export default function LoginScreen() {
       <Button title="Login" onPress={handleLogin} />
 
       <Text
-        style={{ marginTop: 16, color: "blue" }}
+        style={{ marginTop: 16, color: "blue", textAlign: "center" }}
         onPress={() => navigation.navigate("Register")}
       >
         Don’t have an account? Register

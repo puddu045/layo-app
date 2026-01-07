@@ -15,10 +15,12 @@ type ChatSummary = {
     sender: {
       id: string;
       firstName: string;
+      lastName: string;
     };
     receiver: {
       id: string;
       firstName: string;
+      lastName: string;
     };
   };
 

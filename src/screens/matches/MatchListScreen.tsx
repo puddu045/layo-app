@@ -1,17 +1,18 @@
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Text, View, Pressable } from "react-native";
 import { useMatchStore } from "../../store/match.store";
 import { fetchMatchesByJourneyLeg } from "../../api/matches.api";
+import { sendMatchRequest, dismissPotentialMatch } from "../../api/matches.api";
 import { useEffect } from "react";
 
-export default function MatchListScreen({ navigation, route }: any) {
+export default function MatchListScreen({ route }: any) {
   const journeyLegId = route?.params?.journeyLegId;
+
   const matchState = useMatchStore((s) => s.matchesByLegId[journeyLegId]);
   const setMatchesForLeg = useMatchStore((s) => s.setMatchesForLeg);
   const setLoadingForLeg = useMatchStore((s) => s.setLoadingForLeg);
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
-
     return {
       date: d.toLocaleDateString([], {
         day: "2-digit",
@@ -31,13 +32,39 @@ export default function MatchListScreen({ navigation, route }: any) {
       const data = await fetchMatchesByJourneyLeg(journeyLegId);
       setMatchesForLeg(journeyLegId, data);
     };
-
     load();
   }, [journeyLegId]);
 
   if (!matchState || matchState.loading) {
     return <Text>Loading matches...</Text>;
   }
+
+  const removeFromList = (matchId: string) => {
+    setMatchesForLeg(
+      journeyLegId,
+      matchState.data.filter((m) => m.id !== matchId)
+    );
+  };
+
+  const handleSendRequest = async (item: any) => {
+    await sendMatchRequest({
+      senderJourneyLegId: journeyLegId,
+      receiverId: item.journey.user.id,
+      receiverJourneyLegId: item.id,
+    });
+
+    removeFromList(item.id);
+  };
+
+  const handleDismiss = async (item: any) => {
+    await dismissPotentialMatch({
+      senderJourneyLegId: journeyLegId,
+      receiverId: item.journey.user.id,
+      receiverJourneyLegId: item.id,
+    });
+
+    removeFromList(item.id);
+  };
 
   return (
     <FlatList
@@ -51,7 +78,6 @@ export default function MatchListScreen({ navigation, route }: any) {
         return (
           <View
             style={{
-              flexDirection: "row",
               padding: 14,
               marginBottom: 12,
               backgroundColor: "#fff",
@@ -59,36 +85,56 @@ export default function MatchListScreen({ navigation, route }: any) {
               elevation: 2,
             }}
           >
-            {/* Airplane window profile slot */}
+            {/* Header */}
+            <Text style={{ fontSize: 16, fontWeight: "600" }}>
+              {item.journey.user.firstName} {item.journey.user.lastName}
+            </Text>
+
+            <Text style={{ color: "#555", marginTop: 4 }}>
+              {item.departureAirport} → {item.arrivalAirport}
+            </Text>
+
+            <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
+              {dep.date} · {dep.time} → {arr.time}
+            </Text>
+
+            {/* Actions */}
             <View
               style={{
-                width: 52,
-                height: 70,
-                borderRadius: 26,
-                backgroundColor: "#e6eef7",
-                marginRight: 12,
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 2,
-                borderColor: "#c9d8eb",
+                flexDirection: "row",
+                marginTop: 12,
+                justifyContent: "space-between",
               }}
             >
-              <Text style={{ fontSize: 18 }}>✈️</Text>
-            </View>
+              <Pressable
+                onPress={() => handleDismiss(item)}
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  marginRight: 8,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "#555" }}>Not interested</Text>
+              </Pressable>
 
-            {/* Match details */}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                {item.journey.user.firstName} {item.journey.user.lastName}
-              </Text>
-
-              <Text style={{ color: "#555", marginTop: 4 }}>
-                {item.departureAirport} → {item.arrivalAirport}
-              </Text>
-
-              <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
-                {dep.date} · {dep.time} → {arr.time}
-              </Text>
+              <Pressable
+                onPress={() => handleSendRequest(item)}
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  borderRadius: 8,
+                  backgroundColor: "#2563eb",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "600" }}>
+                  Send request
+                </Text>
+              </Pressable>
             </View>
           </View>
         );
