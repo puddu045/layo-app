@@ -3,8 +3,20 @@ import JourneysListScreen from "../screens/journeys/JourneyListScreen";
 import JourneyTabsScreen from "./JourneyTabsScreen";
 import JourneyLegListScreen from "../screens/journeys/journeyLegListScreen";
 import AddJourneyScreen from "../screens/journeys/AddJourneyScreen";
+import ChatScreen from "../screens/chats/ChatScreen";
 
-const Stack = createNativeStackNavigator();
+export type StackParamList = {
+  Journeys: {};
+  JourneyLeg: {};
+  AddJourney: {};
+  JourneyTabs: {};
+  Chat: {
+    chatId: string;
+    name: string;
+  };
+};
+
+const Stack = createNativeStackNavigator<StackParamList>();
 
 export default function AppNavigator() {
   return (
@@ -24,6 +36,13 @@ export default function AppNavigator() {
         name="JourneyTabs"
         component={JourneyTabsScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={({ route }) => ({
+          title: route.params?.name ?? "Chat",
+        })}
       />
     </Stack.Navigator>
   );

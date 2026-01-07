@@ -2,7 +2,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import ChatListScreen from "../screens/chats/ChatListScreen";
 import MatchListScreen from "../screens/matches/MatchListScreen";
 import RequestListScreen from "../screens/matches/RequestListScreen";
-import ChatsStack from "./ChatsStack";
 
 const Tab = createBottomTabNavigator();
 
@@ -13,11 +12,8 @@ export default function JourneyTabsScreen({ route }: any) {
     <Tab.Navigator initialRouteName="Chats">
       <Tab.Screen
         name="Chats"
-        component={ChatsStack}
+        component={ChatListScreen}
         initialParams={{ journeyLegId }}
-        options={{
-          headerShown: false,
-        }}
       />
       <Tab.Screen
         name="Matches"

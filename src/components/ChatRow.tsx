@@ -3,63 +3,59 @@ import { useAuthStore } from "../store/auth.store";
 
 export default function ChatRow({ chat, onPress, onSelectUser }: any) {
   const user = useAuthStore((s) => s.user);
-  if (!user) {
-    // Render skeleton / placeholder safely
-    return (
-      <TouchableOpacity onPress={onPress} style={{ padding: 16 }}>
-        <Text style={{ fontWeight: "600" }}>Loading...</Text>
-      </TouchableOpacity>
-    );
+
+  if (!user || !chat?.match) {
+    return null;
   }
+
+  // 🔑 Decide who to show
   const showUser =
-    user.id !== chat.match.senderId ? chat.match.sender : chat.match.receiver;
+    user.id === chat.match.senderId ? chat.match.receiver : chat.match.sender;
+
+  if (!showUser) return null;
+
+  const fullName = [showUser.firstName, showUser.lastName]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <TouchableOpacity
       onPress={() => {
         onSelectUser?.(showUser.firstName);
-        onPress();
+        onPress?.();
       }}
       style={{
         flexDirection: "row",
+        alignItems: "center",
         padding: 16,
         borderBottomWidth: 0.5,
         borderColor: "#ddd",
       }}
     >
+      {/* LEFT */}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: "600" }}>
-          {[showUser.firstName, showUser.lastName].filter(Boolean).join(" ")}
-        </Text>
+        <Text style={{ fontWeight: "600", fontSize: 16 }}>{fullName}</Text>
 
-        <Text numberOfLines={1} style={{ color: "#666" }}>
-          {chat.lastMessage?.text ?? "No messages yet"}
+        <Text numberOfLines={1} style={{ color: "#666", marginTop: 4 }}>
+          {chat.unreadCount > 0 ? "New messages" : "No new messages yet"}
         </Text>
       </View>
 
-      <View style={{ alignItems: "flex-end" }}>
-        {chat.lastMessage && (
-          <Text style={{ fontSize: 12, color: "#888" }}>
-            {new Date(chat.lastMessage.createdAt).toLocaleTimeString()}
+      {/* RIGHT */}
+      {chat.unreadCount > 0 && (
+        <View
+          style={{
+            backgroundColor: "#2f80ed",
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+          }}
+        >
+          <Text style={{ color: "#fff", fontSize: 12 }}>
+            {chat.unreadCount}
           </Text>
-        )}
-
-        {chat.unreadCount > 0 && (
-          <View
-            style={{
-              marginTop: 6,
-              backgroundColor: "#2f80ed",
-              borderRadius: 12,
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-            }}
-          >
-            <Text style={{ color: "#fff", fontSize: 12 }}>
-              {chat.unreadCount}
-            </Text>
-          </View>
-        )}
-      </View>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
