@@ -1,5 +1,6 @@
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Text, View, Pressable } from "react-native";
 import { fetchPendingRequestsByJourneyLeg } from "../../api/matches.api";
+import { acceptMatch, rejectMatch } from "../../api/matches.api";
 import { useEffect } from "react";
 import { useRequestStore } from "../../store/request.store";
 
@@ -8,6 +9,23 @@ export default function RequestListScreen({ navigation, route }: any) {
   const requestState = useRequestStore((s) => s.requestsByLegId[journeyLegId]);
   const setRequestsForLeg = useRequestStore((s) => s.setRequestsForLeg);
   const setLoadingForLeg = useRequestStore((s) => s.setLoadingForLeg);
+
+  const removeFromList = (matchId: string) => {
+    setRequestsForLeg(
+      journeyLegId,
+      requestState.data.filter((r) => r.id !== matchId)
+    );
+  };
+
+  const handleAccept = async (item: any) => {
+    await acceptMatch(item.id);
+    removeFromList(item.id);
+  };
+
+  const handleReject = async (item: any) => {
+    await rejectMatch(item.id);
+    removeFromList(item.id);
+  };
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
@@ -51,7 +69,6 @@ export default function RequestListScreen({ navigation, route }: any) {
         return (
           <View
             style={{
-              flexDirection: "row",
               padding: 14,
               marginBottom: 12,
               backgroundColor: "#fff",
@@ -59,55 +76,60 @@ export default function RequestListScreen({ navigation, route }: any) {
               elevation: 2,
             }}
           >
-            {/* Airplane window profile slot */}
-            <View
-              style={{
-                width: 52,
-                height: 70,
-                borderRadius: 26,
-                backgroundColor: "#e6eef7",
-                marginRight: 12,
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 2,
-                borderColor: "#c9d8eb",
-              }}
-            >
-              <Text style={{ fontSize: 18 }}>✈️</Text>
-            </View>
+            {/* Header */}
+            <Text style={{ fontSize: 16, fontWeight: "600" }}>
+              {item.sender.firstName} {item.sender.lastName}
+            </Text>
 
-            {/* Request details */}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                {item.sender.firstName} {item.sender.lastName}
-              </Text>
+            <Text style={{ color: "#555", marginTop: 4 }}>
+              {item.senderJourneyLeg.departureAirport} →{" "}
+              {item.senderJourneyLeg.arrivalAirport}
+            </Text>
 
-              <Text style={{ color: "#555", marginTop: 4 }}>
-                {item.senderJourneyLeg.departureAirport} →{" "}
-                {item.senderJourneyLeg.arrivalAirport}
-              </Text>
+            <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
+              {dep.date} · {dep.time} → {arr.time}
+            </Text>
 
-              <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
-                {dep.date} · {dep.time} → {arr.time}
-              </Text>
-
-              {/* Status */}
-              <Text
+            {/* Actions (only for pending) */}
+            {item.status === "PENDING" && (
+              <View
                 style={{
-                  marginTop: 6,
-                  fontSize: 12,
-                  fontWeight: "500",
-                  color:
-                    item.status === "PENDING"
-                      ? "#d97706"
-                      : item.status === "ACCEPTED"
-                      ? "#15803d"
-                      : "#b91c1c",
+                  flexDirection: "row",
+                  marginTop: 12,
+                  justifyContent: "space-between",
                 }}
               >
-                {item.status}
-              </Text>
-            </View>
+                <Pressable
+                  onPress={() => handleReject(item)}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginRight: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#555" }}>Reject</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => handleAccept(item)}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: 8,
+                    backgroundColor: "#16a34a",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>
+                    Accept
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         );
       }}
