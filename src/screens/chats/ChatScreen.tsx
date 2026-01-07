@@ -24,29 +24,38 @@ export default function ChatScreen({ route }: any) {
   const user = useAuthStore((s) => s.user);
   if (!user) return null;
   const userId = user.id;
+
   const { chatId } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [text, setText] = useState("");
   const flatListRef = useRef<FlatList>(null);
+
   useEffect(() => {
     loadMessages();
     markChatAsRead(chatId);
   }, [chatId]);
+
+  function appendMessage(message: any) {
+    setMessages((prev) => [...prev, message]);
+  }
+
   async function loadMessages() {
     const res = await fetchMessages(chatId);
-    setMessages(res.messages.reverse()); // ✅ array only
+    setMessages(res.messages.reverse());
     setCursor(res.nextCursor ?? null);
   }
+
   async function onSend() {
     if (!text.trim()) return;
     const sent = await sendMessage(chatId, text);
-    setMessages((prev) => [...prev, sent]);
+    appendMessage(sent);
     setText("");
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 50);
   }
+
   function renderItem({ item }: any) {
     const isMe = item.senderId === userId;
     return (
@@ -64,6 +73,7 @@ export default function ChatScreen({ route }: any) {
       </View>
     );
   }
+
   return (
     // 1. KeyboardAvoidingView MUST be the outermost wrapper
     <KeyboardAvoidingView
