@@ -3,6 +3,7 @@ import { loginApi } from "../../api/auth.api";
 import { useAuthStore } from "../../store/auth.store";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
+import { connectSocket } from "../../socket/socket";
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -18,6 +19,7 @@ export default function LoginScreen() {
     try {
       const data = await loginApi(email, password);
       setAuth(data.accessToken, data.user);
+      connectSocket(data.accessToken);
     } catch (err) {
       setError("Invalid email or password");
     }
