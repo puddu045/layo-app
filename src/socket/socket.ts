@@ -12,13 +12,9 @@ export function connectSocket(token: string) {
     },
   });
 
-  socket.on("connect", () => {
-    console.log("socket connected", socket?.id);
-  });
+  socket.on("connect", () => {});
 
-  socket.on("disconnect", (reason) => {
-    console.log("socket disconnected", reason);
-  });
+  socket.on("disconnect", (reason) => {});
 
   return socket;
 }

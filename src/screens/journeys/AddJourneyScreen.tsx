@@ -71,8 +71,6 @@ export default function AddJourneyScreen({ navigation }: any) {
       })),
     };
 
-    console.log(payload);
-
     await createJourney(payload);
     navigation.goBack();
   }
