@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useHeaderHeight } from "@react-navigation/elements";
 import {
   FlatList,
@@ -17,6 +17,8 @@ import {
 import { useAuthStore } from "../../store/auth.store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { getSocket } from "../../socket/socket";
+
 export default function ChatScreen({ route }: any) {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -31,29 +33,106 @@ export default function ChatScreen({ route }: any) {
   const [text, setText] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    loadMessages();
-    markChatAsRead(chatId);
-  }, [chatId]);
+  /* ---------------- message helpers ---------------- */
 
-  function appendMessage(message: any) {
-    setMessages((prev) => [...prev, message]);
-  }
+  const appendMessage = useCallback((message: any) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === message.id)) return prev;
+      return [...prev, message];
+    });
+  }, []);
 
-  async function loadMessages() {
+  const replaceMessage = useCallback((tempId: string, realMessage: any) => {
+    setMessages((prev) => prev.map((m) => (m.id === tempId ? realMessage : m)));
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    requestAnimationFrame(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    });
+  }, []);
+
+  /* ---------------- initial load ---------------- */
+
+  const loadMessages = useCallback(async () => {
     const res = await fetchMessages(chatId);
     setMessages(res.messages.reverse());
     setCursor(res.nextCursor ?? null);
-  }
+    scrollToBottom();
+  }, [chatId, scrollToBottom]);
+
+  useEffect(() => {
+    loadMessages();
+    markChatAsRead(chatId);
+  }, [chatId, loadMessages]);
+
+  /* ---------------- socket: join room ---------------- */
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    socket.emit("join_chat", { chatId });
+
+    return () => {
+      socket.emit("leave_chat", { chatId });
+    };
+  }, [chatId]);
+
+  /* ---------------- socket: receive messages ---------------- */
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handler = (message: any) => {
+      if (message.chatId !== chatId) return;
+      if (message.senderId === userId && message.tempId) {
+        replaceMessage(message.tempId, message);
+      } else {
+        appendMessage(message);
+      }
+      scrollToBottom();
+    };
+
+    socket.on("new_message", handler);
+
+    return () => {
+      socket.off("new_message", handler);
+    };
+  }, [chatId, appendMessage, scrollToBottom]);
+
+  /* ---------------- send message (SOCKET) ---------------- */
 
   async function onSend() {
     if (!text.trim()) return;
-    const sent = await sendMessage(chatId, text);
-    appendMessage(sent);
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticMessage = {
+      id: tempId,
+      tempId,
+      chatId,
+      senderId: userId,
+      content: text,
+      createdAt: new Date().toISOString(),
+      optimistic: true,
+    };
+
+    // optimistic UI
+    appendMessage(optimisticMessage);
     setText("");
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 50);
+    scrollToBottom();
+
+    // 🔑 send via socket (this enables real-time)
+    socket.emit("send_message", {
+      chatId,
+      content: optimisticMessage.content,
+      tempId,
+    });
   }
 
   function renderItem({ item }: any) {
