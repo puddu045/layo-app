@@ -18,6 +18,7 @@ import { useAuthStore } from "../../store/auth.store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getSocket } from "../../socket/socket";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function ChatScreen({ route }: any) {
   const headerHeight = useHeaderHeight();
@@ -56,6 +57,14 @@ export default function ChatScreen({ route }: any) {
   }, []);
 
   /* ---------------- initial load ---------------- */
+
+  useFocusEffect(
+    useCallback(() => {
+      const socket = getSocket();
+      if (!socket) return;
+      socket.emit("mark_chat_read", { chatId });
+    }, [chatId])
+  );
 
   const loadMessages = useCallback(async () => {
     const res = await fetchMessages(chatId);
@@ -96,6 +105,9 @@ export default function ChatScreen({ route }: any) {
         appendMessage(message);
       }
       scrollToBottom();
+      if (message.senderId !== userId) {
+        socket.emit("mark_chat_read", { chatId });
+      }
     };
 
     socket.on("new_message", handler);
