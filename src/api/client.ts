@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useAuthStore } from "../store/auth.store";
+import { URL_Backend } from "../utils/backendURL";
 
 const api = axios.create({
-  baseURL: "http://192.168.1.202:3000",
+  baseURL: `${URL_Backend}`,
   withCredentials: true, // REQUIRED for refresh cookie
 });
 
@@ -49,7 +50,7 @@ api.interceptors.response.use(
       try {
         console.log("token refreshed");
         const res = await axios.post(
-          "https://192.168.1.202:3000/auth/refresh",
+          `${URL_Backend}`,
           {},
           { withCredentials: true }
         );

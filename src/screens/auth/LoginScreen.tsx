@@ -21,6 +21,7 @@ export default function LoginScreen() {
       setAuth(data.accessToken, data.user);
       connectSocket(data.accessToken);
     } catch (err) {
+      console.log(err);
       setError("Invalid email or password");
     }
   };

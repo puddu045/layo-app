@@ -27,6 +27,9 @@ export default function ChatScreen({ route }: any) {
   if (!user) return null;
   const userId = user.id;
 
+  const keyboardVerticalOffset =
+    Platform.OS === "ios" ? headerHeight + insets.top : 100;
+
   const { chatId } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -159,11 +162,10 @@ export default function ChatScreen({ route }: any) {
       style={{
         flex: 1,
         backgroundColor: "#fff",
-        paddingBottom: Platform.OS === "ios" ? 0 : 0,
       }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       // If you have a top header, you MUST use this offset (adjust 90 as needed)
-      keyboardVerticalOffset={headerHeight - 170}
+      keyboardVerticalOffset={keyboardVerticalOffset}
     >
       {/* 2. FlatList handles its own space */}
       <FlatList
@@ -172,7 +174,7 @@ export default function ChatScreen({ route }: any) {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 12 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: 25 }}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
         }
@@ -184,6 +186,12 @@ export default function ChatScreen({ route }: any) {
           flexDirection: "row",
           padding: 10,
           alignItems: "center",
+          paddingBottom:
+            Platform.OS === "ios"
+              ? insets.bottom > 0
+                ? insets.bottom
+                : 10
+              : 10,
         }}
       >
         <TextInput

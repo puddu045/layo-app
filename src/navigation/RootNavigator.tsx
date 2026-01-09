@@ -5,6 +5,8 @@ import AuthNavigator from "./AuthNavigator";
 import AppNavigator from "./AppNavigator";
 import axios from "axios";
 import api from "../api/client";
+import { URL_Backend } from "../utils/backendURL";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -16,7 +18,7 @@ export default function RootNavigator() {
     const bootstrap = async () => {
       try {
         const res = await axios.post(
-          "http://192.168.1.202:3000/auth/refresh",
+          `${URL_Backend}/auth/refresh`,
           {},
           { withCredentials: true }
         );
@@ -40,7 +42,9 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AppNavigator /> : <AuthNavigator />}
+      <SafeAreaProvider>
+        {isAuthenticated ? <AppNavigator /> : <AuthNavigator />}
+      </SafeAreaProvider>
     </NavigationContainer>
   );
 }

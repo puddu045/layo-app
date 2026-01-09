@@ -1,6 +1,25 @@
 import { create } from "zustand";
 
-type MatchSummary = {
+/* ---------- Core Types ---------- */
+
+export type User = {
+  id: string;
+  firstName: string;
+  lastName: string;
+};
+
+export type Journey = {
+  id: string;
+  userId: string;
+  journeyType: "DIRECT" | "LAYOVER";
+  flightNumber: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+};
+
+export type JourneyLeg = {
   id: string;
   journeyId: string;
   sequence: number;
@@ -9,79 +28,115 @@ type MatchSummary = {
   arrivalAirport: string;
   departureTime: string;
   arrivalTime: string;
-  layoverMinutes?: number;
-  createdAt: string;
-  journey: {
+  layoverMinutes: number | null;
+};
+
+/* ---------- Match Result Types ---------- */
+
+export type SameFlightMatch = {
+  myJourneyLeg: {
     id: string;
-    userId: string;
-    journeyType: "LAYOVER" | "DIRECT";
+    journeyId: string;
+    sequence: number;
     flightNumber: string;
     departureAirport: string;
     arrivalAirport: string;
     departureTime: string;
     arrivalTime: string;
+    layoverMinutes: number | null;
     createdAt: string;
-    updatedAt: string;
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-    };
+  };
+
+  otherJourneyLeg: {
+    id: string;
+    journeyId: string;
+    sequence: number;
+    flightNumber: string;
+    departureAirport: string;
+    arrivalAirport: string;
+    departureTime: string;
+    arrivalTime: string;
+    layoverMinutes: number | null;
+    createdAt: string;
+  };
+
+  otherUser: {
+    id: string;
+    firstName: string;
+    lastName: string;
   };
 };
 
-type MatchState = {
-  matchesByLegId: {
-    [journeyLegId: string]: {
-      data: MatchSummary[];
-      loading: boolean;
-      error?: string;
-    };
+export type LayoverMatch = {
+  matchId?: string;
+  user: User;
+  arrivalAirport: string;
+  overlapMinutes: number;
+  leg: JourneyLeg & {
+    journey: Journey;
   };
-
-  setMatchesForLeg: (journeyLegId: string, matches: MatchSummary[]) => void;
-
-  setLoadingForLeg: (journeyLegId: string, loading: boolean) => void;
-
-  clearMatchesForLeg: (journeyLegId: string) => void;
-
-  clearAllMatches: () => void;
 };
 
-export const useMatchStore = create<MatchState>((set) => ({
-  matchesByLegId: {},
+/* ---------- API Response Shapes ---------- */
 
-  setMatchesForLeg: (journeyLegId, matches) =>
-    set((state) => ({
-      matchesByLegId: {
-        ...state.matchesByLegId,
-        [journeyLegId]: {
-          data: matches,
-          loading: false,
-        },
-      },
-    })),
+export type MatchDiscoveryResponse = {
+  sameFlightMatches: SameFlightMatch[];
+  layoverMatches: LayoverMatch[];
+};
 
-  setLoadingForLeg: (journeyLegId, loading) =>
-    set((state) => ({
-      matchesByLegId: {
-        ...state.matchesByLegId,
-        [journeyLegId]: {
-          data: state.matchesByLegId[journeyLegId]?.data ?? [],
-          loading,
-        },
-      },
-    })),
+/* ---------- Store ---------- */
 
-  clearMatchesForLeg: (journeyLegId) =>
-    set((state) => {
-      const copy = { ...state.matchesByLegId };
-      delete copy[journeyLegId];
-      return { matchesByLegId: copy };
+type MatchStore = {
+  /* discovery */
+  sameFlightMatches: SameFlightMatch[];
+  layoverMatches: LayoverMatch[];
+
+  /* incoming requests */
+
+  loading: boolean;
+
+  /* setters */
+  setMatches: (data: MatchDiscoveryResponse) => void;
+  setLoading: (loading: boolean) => void;
+
+  /* mutations */
+  removeDiscoveryUser: (userId: string) => void;
+
+  reset: () => void;
+};
+
+export const useMatchStore = create<MatchStore>((set) => ({
+  /* state */
+  sameFlightMatches: [],
+  layoverMatches: [],
+  pendingRequests: [],
+  loading: false,
+
+  /* setters */
+  setMatches: (data) =>
+    set({
+      sameFlightMatches: data.sameFlightMatches,
+      layoverMatches: data.layoverMatches,
+      loading: false,
     }),
 
-  clearAllMatches: () =>
+  setLoading: (loading) => set({ loading }),
+
+  /* mutations */
+
+  removeDiscoveryUser: (userId) =>
+    set((state) => ({
+      sameFlightMatches: state.sameFlightMatches.filter(
+        (m) => m.otherUser.id !== userId
+      ),
+      layoverMatches: state.layoverMatches.filter((m) => m.user.id !== userId),
+    })),
+
+  /* reset */
+  reset: () =>
     set({
-      matchesByLegId: {},
+      sameFlightMatches: [],
+      layoverMatches: [],
+      loading: false,
     }),
 }));

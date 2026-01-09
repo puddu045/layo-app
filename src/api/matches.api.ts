@@ -6,47 +6,51 @@ export const fetchMatchesByJourneyLeg = async (journeyLegId: string) => {
   });
   return res.data;
 };
+export const fetchMatchesByJourney = async (journeyId: string) => {
+  const res = await api.get(`/matches/journey/${journeyId}`, {
+    params: { journeyId },
+  });
+  return res.data;
+};
 
-export const fetchPendingRequestsByJourneyLeg = async (
-  journeyLegId: string
-) => {
-  const res = await api.get(`/matches/pending/${journeyLegId}`, {
-    params: { journeyLegId },
+export const fetchPendingRequestsByJourney = async (journeyId: string) => {
+  const res = await api.get(`/matches/pending/${journeyId}`, {
+    params: { journeyId },
   });
   return res.data;
 };
 
 export const sendMatchRequest = async ({
-  senderJourneyLegId,
+  senderJourneyId,
   receiverId,
-  receiverJourneyLegId,
+  receiverJourneyId,
 }: {
-  senderJourneyLegId: string;
+  senderJourneyId: string;
   receiverId: string;
-  receiverJourneyLegId: string;
+  receiverJourneyId: string;
 }) => {
   const res = await api.post("/matches", {
-    senderJourneyLegId,
+    senderJourneyId,
     receiverId,
-    receiverJourneyLegId,
+    receiverJourneyId,
   });
 
   return res.data;
 };
 
 export const dismissPotentialMatch = async ({
-  senderJourneyLegId,
+  senderJourneyId,
   receiverId,
-  receiverJourneyLegId,
+  receiverJourneyId,
 }: {
-  senderJourneyLegId: string;
+  senderJourneyId: string;
   receiverId: string;
-  receiverJourneyLegId: string;
+  receiverJourneyId: string;
 }) => {
   const res = await api.post("/matches/dismiss", {
-    senderJourneyLegId,
+    senderJourneyId,
     receiverId,
-    receiverJourneyLegId,
+    receiverJourneyId,
   });
 
   return res.data;

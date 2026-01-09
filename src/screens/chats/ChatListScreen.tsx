@@ -1,57 +1,56 @@
 import React, { useCallback, useEffect } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { fetchChatsByJourneyLeg } from "../../api/chats.api";
+import { fetchChatsByJourney } from "../../api/chats.api";
 import { useChatStore } from "../../store/chat.store";
 import ChatRow from "../../components/ChatRow";
 
 export default function ChatListScreen({ navigation, route }: any) {
-  const journeyLegId: string | undefined = route?.params?.journeyLegId;
+  const journeyId: string | undefined = route?.params?.journeyId;
 
   // 🔑 Read scoped state
-  const chats =
-    useChatStore((s) => s.chatsByJourneyLegId[journeyLegId ?? ""]) ?? [];
+  const chats = useChatStore((s) => s.chatsByJourneyId[journeyId ?? ""]) ?? [];
 
   const loading =
-    useChatStore((s) => s.loadingByJourneyLegId[journeyLegId ?? ""]) ?? false;
+    useChatStore((s) => s.loadingByJourneyId[journeyId ?? ""]) ?? false;
 
   // 🔧 Correct setters
-  const setChatsForLeg = useChatStore((s) => s.setChatsForLeg);
-  const setLoadingForLeg = useChatStore((s) => s.setLoadingForLeg);
+  const setChatsForLeg = useChatStore((s) => s.setChatsForJourney);
+  const setLoadingForLeg = useChatStore((s) => s.setLoadingForJourney);
 
   const loadChats = async () => {
-    if (!journeyLegId) return;
+    if (!journeyId) return;
 
     try {
-      setLoadingForLeg(journeyLegId, true);
-      const data = await fetchChatsByJourneyLeg(journeyLegId);
-      setChatsForLeg(journeyLegId, data);
+      setLoadingForLeg(journeyId, true);
+      const data = await fetchChatsByJourney(journeyId);
+      setChatsForLeg(journeyId, data);
     } finally {
-      setLoadingForLeg(journeyLegId, false);
+      setLoadingForLeg(journeyId, false);
     }
   };
 
   // Load when journey changes
   useEffect(() => {
     loadChats();
-  }, [journeyLegId]);
+  }, [journeyId]);
 
   // Reload when screen gains focus
   useFocusEffect(
     useCallback(() => {
       loadChats();
-    }, [journeyLegId])
+    }, [journeyId])
   );
 
   // Polling every 15 seconds
   useEffect(() => {
-    if (!journeyLegId) return;
+    if (!journeyId) return;
 
     const interval = setInterval(loadChats, 15000);
     return () => clearInterval(interval);
-  }, [journeyLegId]);
+  }, [journeyId]);
 
-  if (!journeyLegId) {
+  if (!journeyId) {
     return (
       <Text style={{ textAlign: "center", marginTop: 40 }}>
         Select a journey first

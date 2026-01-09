@@ -1,15 +1,17 @@
 import { FlatList, Text, View, Pressable } from "react-native";
-import { useMatchStore } from "../../store/match.store";
-import { fetchMatchesByJourneyLeg } from "../../api/matches.api";
-import { sendMatchRequest, dismissPotentialMatch } from "../../api/matches.api";
 import { useEffect } from "react";
+import { useMatchStore } from "../../store/match.store";
+import {
+  fetchMatchesByJourney,
+  sendMatchRequest,
+  dismissPotentialMatch,
+} from "../../api/matches.api";
 
 export default function MatchListScreen({ route }: any) {
-  const journeyLegId = route?.params?.journeyLegId;
+  const journeyId = route?.params?.journeyId;
 
-  const matchState = useMatchStore((s) => s.matchesByLegId[journeyLegId]);
-  const setMatchesForLeg = useMatchStore((s) => s.setMatchesForLeg);
-  const setLoadingForLeg = useMatchStore((s) => s.setLoadingForLeg);
+  const { sameFlightMatches, layoverMatches, loading, setMatches, setLoading } =
+    useMatchStore();
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
@@ -28,52 +30,150 @@ export default function MatchListScreen({ route }: any) {
 
   useEffect(() => {
     const load = async () => {
-      setLoadingForLeg(journeyLegId, true);
-      const data = await fetchMatchesByJourneyLeg(journeyLegId);
-      setMatchesForLeg(journeyLegId, data);
+      setLoading(true);
+      const data = await fetchMatchesByJourney(journeyId);
+      setMatches(data);
     };
-    load();
-  }, [journeyLegId]);
 
-  if (!matchState || matchState.loading) {
-    return <Text>Loading matches...</Text>;
+    load();
+  }, [journeyId]);
+
+  if (loading) {
+    return (
+      <Text style={{ textAlign: "center", marginTop: 40 }}>
+        Loading matches...
+      </Text>
+    );
   }
 
-  const removeFromList = (matchId: string) => {
-    setMatchesForLeg(
-      journeyLegId,
-      matchState.data.filter((m) => m.id !== matchId)
+  /* ---------- Merge matches per user ---------- */
+
+  type UnifiedMatch = {
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+    sameFlights: any[];
+    layovers: any[];
+  };
+
+  const matchMap = new Map<string, UnifiedMatch>();
+
+  // Same-flight matches → use otherUser
+  sameFlightMatches.forEach((m) => {
+    const userId = m.otherUser.id;
+    const existing = matchMap.get(userId);
+
+    if (existing) {
+      existing.sameFlights.push(m);
+    } else {
+      matchMap.set(userId, {
+        user: m.otherUser,
+        sameFlights: [m],
+        layovers: [],
+      });
+    }
+  });
+
+  // Layover matches → use user (unchanged structure)
+  layoverMatches.forEach((m) => {
+    const userId = m.user.id;
+    const existing = matchMap.get(userId);
+
+    if (existing) {
+      existing.layovers.push(m);
+    } else {
+      matchMap.set(userId, {
+        user: m.user,
+        sameFlights: [],
+        layovers: [m],
+      });
+    }
+  });
+
+  const unifiedMatches = Array.from(matchMap.values());
+
+  if (unifiedMatches.length === 0) {
+    return (
+      <Text style={{ textAlign: "center", marginTop: 40 }}>
+        No matches found
+      </Text>
     );
+  }
+
+  const removeUserFromMatches = (userId: string) => {
+    useMatchStore.getState().setMatches({
+      sameFlightMatches: sameFlightMatches.filter(
+        (m) => m.otherUser.id !== userId
+      ),
+      layoverMatches: layoverMatches.filter((m) => m.user.id !== userId),
+    });
   };
 
-  const handleSendRequest = async (item: any) => {
+  const handleSendRequest = async (item: UnifiedMatch) => {
+    const receiverJourneyId =
+      item.sameFlights[0]?.otherJourneyLeg.journeyId ??
+      item.layovers[0]?.leg.journeyId;
+
     await sendMatchRequest({
-      senderJourneyLegId: journeyLegId,
-      receiverId: item.journey.user.id,
-      receiverJourneyLegId: item.id,
+      senderJourneyId: journeyId,
+      receiverId: item.user.id,
+      receiverJourneyId,
     });
 
-    removeFromList(item.id);
+    removeUserFromMatches(item.user.id);
   };
 
-  const handleDismiss = async (item: any) => {
+  const handleDismiss = async (item: UnifiedMatch) => {
+    const receiverJourneyId =
+      item.sameFlights[0]?.otherJourneyLeg.journeyId ??
+      item.layovers[0]?.leg.journeyId;
+
     await dismissPotentialMatch({
-      senderJourneyLegId: journeyLegId,
-      receiverId: item.journey.user.id,
-      receiverJourneyLegId: item.id,
+      senderJourneyId: journeyId,
+      receiverId: item.user.id,
+      receiverJourneyId,
     });
 
-    removeFromList(item.id);
+    removeUserFromMatches(item.user.id);
   };
 
   return (
     <FlatList
-      data={matchState.data}
-      keyExtractor={(item) => item.id}
+      data={unifiedMatches}
+      keyExtractor={(item) => item.user.id}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
-        const dep = formatDateTime(item.departureTime);
-        const arr = formatDateTime(item.arrivalTime);
+        const { user, sameFlights, layovers } = item;
+
+        const flightDescriptions = sameFlights.map((m) => {
+          const leg = m.otherJourneyLeg;
+          const dep = formatDateTime(leg.departureTime);
+          return `${leg.flightNumber} on ${dep.date}`;
+        });
+
+        const flightsText =
+          flightDescriptions.length === 1
+            ? flightDescriptions[0]
+            : flightDescriptions.slice(0, -1).join(", ") +
+              " and " +
+              flightDescriptions[flightDescriptions.length - 1];
+
+        const layoverDescriptions = layovers.map(
+          (m) => `${m.arrivalAirport} airport (${m.overlapMinutes} min overlap)`
+        );
+        const layoverLabel =
+          layovers.length === 1
+            ? "Has a layover with you at"
+            : "Has layovers with you at";
+
+        const layoversText =
+          layoverDescriptions.length === 1
+            ? layoverDescriptions[0]
+            : layoverDescriptions.slice(0, -1).join(", ") +
+              " and " +
+              layoverDescriptions[layoverDescriptions.length - 1];
 
         return (
           <View
@@ -85,24 +185,34 @@ export default function MatchListScreen({ route }: any) {
               elevation: 2,
             }}
           >
-            {/* Header */}
+            {/* Name */}
             <Text style={{ fontSize: 16, fontWeight: "600" }}>
-              {item.journey.user.firstName} {item.journey.user.lastName}
+              {user.firstName} {user.lastName}
             </Text>
 
-            <Text style={{ color: "#555", marginTop: 4 }}>
-              {item.departureAirport} → {item.arrivalAirport}
-            </Text>
+            {/* Same flight matches */}
+            {sameFlights.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={{ fontWeight: "500", color: "#333" }}>
+                  Flying with you on {flightsText}
+                </Text>
+              </View>
+            )}
 
-            <Text style={{ color: "#777", marginTop: 4, fontSize: 13 }}>
-              {dep.date} · {dep.time} → {arr.time}
-            </Text>
+            {/* Layover matches */}
+            {layovers.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={{ fontWeight: "500", color: "#333" }}>
+                  {layoverLabel} {layoversText}
+                </Text>
+              </View>
+            )}
 
             {/* Actions */}
             <View
               style={{
                 flexDirection: "row",
-                marginTop: 12,
+                marginTop: 14,
                 justifyContent: "space-between",
               }}
             >

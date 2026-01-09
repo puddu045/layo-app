@@ -1,11 +1,16 @@
 import { io, Socket } from "socket.io-client";
+import { URL_Backend } from "../utils/backendURL";
 
 let socket: Socket | null = null;
 
 export function connectSocket(token: string) {
-  if (socket) return socket;
+  // Always reset socket on new login
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 
-  socket = io("http://192.168.1.202:3000", {
+  socket = io(`${URL_Backend}/chat`, {
     transports: ["websocket"],
     auth: {
       token,
@@ -15,6 +20,8 @@ export function connectSocket(token: string) {
   socket.on("connect", () => {});
 
   socket.on("disconnect", (reason) => {});
+
+  socket.on("connect_error", (err) => {});
 
   return socket;
 }

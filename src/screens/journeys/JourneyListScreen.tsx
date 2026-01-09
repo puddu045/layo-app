@@ -5,14 +5,16 @@ import { useCallback, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuthStore } from "../../store/auth.store";
 import { logoutApi } from "../../api/auth.api";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { resetChatSession } from "../../utils/resetChatSession";
 
 export default function JourneyListScreen({ navigation }: any) {
-  const { journeys, setJourneys, setActiveJourney, setLoading } =
-    useJourneyStore();
-
+  const { journeys, setJourneys, setLoading } = useJourneyStore();
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   async function logout() {
+    resetChatSession();
     clearAuth();
     await logoutApi();
   }
@@ -26,6 +28,16 @@ export default function JourneyListScreen({ navigation }: any) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadJourneys();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadJourneys();
+    }, [])
+  );
 
   function formatDateTime(iso: string) {
     const d = new Date(iso);
@@ -42,96 +54,214 @@ export default function JourneyListScreen({ navigation }: any) {
     };
   }
 
-  useEffect(() => {
-    loadJourneys();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadJourneys();
-    }, [])
-  );
+  function formatLayover(minutes: number | null) {
+    if (!minutes) return "";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
       {/* Header */}
       <View
         style={{
           paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingVertical: 18,
           flexDirection: "row",
-          justifyContent: "space-between",
           alignItems: "center",
+          marginBottom: 25,
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: "600" }}>My Journeys</Text>
-
-        <Pressable onPress={logout}>
-          <Text style={{ color: "#b91c1c", fontWeight: "500" }}>Logout</Text>
-        </Pressable>
+        <View style={{ flex: 1 }} />
+        <Text style={{ textAlign: "center", fontSize: 20, fontWeight: "600" }}>
+          My Journeys
+        </Text>
+        <View style={{ flex: 1, alignItems: "flex-end" }}>
+          <Pressable onPress={logout} hitSlop={10}>
+            <Ionicons name="log-out-outline" size={22} color="#2563eb" />
+          </Pressable>
+        </View>
       </View>
 
-      {/* Journey list */}
       <FlatList
         data={journeys}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => {
-          const dep = formatDateTime(item.departureTime);
-          const arr = formatDateTime(item.arrivalTime);
+          const legs = [...item.legs].sort((a, b) => a.sequence - b.sequence);
 
           return (
-            <Pressable
-              onPress={() => {
-                setActiveJourney(item);
-                navigation.navigate("JourneyLeg");
-              }}
-              style={{
-                flexDirection: "row",
-                padding: 14,
-                marginBottom: 12,
-                backgroundColor: "#fff",
-                borderRadius: 12,
-                elevation: 2,
-              }}
-            >
-              {/* Airplane window icon */}
-              <View
+            <View style={{ alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate("JourneyTabs", {
+                    journeyId: item.id,
+                  })
+                }
                 style={{
-                  width: 52,
-                  height: 70,
-                  borderRadius: 26,
-                  backgroundColor: "#e6eef7",
-                  marginRight: 12,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderWidth: 2,
-                  borderColor: "#c9d8eb",
+                  width: "92%",
+                  backgroundColor: "#fff",
+                  borderRadius: 16,
+                  paddingVertical: 8,
+                  elevation: 3,
                 }}
               >
-                <Text style={{ fontSize: 18 }}>✈️</Text>
-              </View>
+                {/* Journey summary line */}
+                <View
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingTop: 10,
+                    paddingBottom: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      color: "#0f172a",
+                    }}
+                  >
+                    {item.departureAirport} → {item.arrivalAirport}
+                  </Text>
+                </View>
+                {legs.map((leg, index) => {
+                  const isLastLeg = index === legs.length - 1;
+                  const nextLeg = !isLastLeg ? legs[index + 1] : null;
 
-              {/* Journey details */}
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                  {item.departureAirport} → {item.arrivalAirport}
-                </Text>
+                  const dep = formatDateTime(leg.departureTime);
+                  const arr = formatDateTime(leg.arrivalTime);
 
-                <Text style={{ color: "#666", marginTop: 4, fontSize: 13 }}>
-                  {dep.date} · {dep.time}
-                </Text>
+                  return (
+                    <View
+                      key={leg.id}
+                      style={{
+                        flexDirection: "row",
+                        marginHorizontal: 12,
+                        marginTop: 12,
+                        position: "relative",
+                      }}
+                    >
+                      {/* Timeline column */}
+                      <View
+                        style={{
+                          width: 28,
+                          alignItems: "center",
+                        }}
+                      >
+                        {/* Dot */}
+                        <View
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: "#2563eb",
+                            marginTop: 6,
+                          }}
+                        />
 
-                <Text style={{ color: "#666", marginTop: 2, fontSize: 13 }}>
-                  {arr.date} · {arr.time}
-                </Text>
-              </View>
-            </Pressable>
+                        {/* Line to next item */}
+                        {!isLastLeg && (
+                          <View
+                            style={{
+                              flex: 1,
+                              width: 1,
+                              borderStyle: "dotted",
+                              borderWidth: 1,
+                              borderColor: "#cbd5e1",
+                              marginTop: 4,
+                            }}
+                          />
+                        )}
+                      </View>
+
+                      {/* Content column */}
+                      <View style={{ flex: 1 }}>
+                        {/* Leg card */}
+                        <View
+                          style={{
+                            backgroundColor: "#f9fafb",
+                            borderRadius: 12,
+                            padding: 14,
+                            elevation: 1,
+                          }}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: "600" }}>
+                            {leg.flightNumber}
+                          </Text>
+
+                          <Text style={{ marginTop: 4 }}>
+                            {leg.departureAirport} → {leg.arrivalAirport}
+                          </Text>
+
+                          <Text
+                            style={{
+                              marginTop: 2,
+                              color: "#666",
+                              fontSize: 13,
+                            }}
+                          >
+                            {dep.date} · {dep.time}
+                          </Text>
+
+                          <Text style={{ color: "#666", fontSize: 13 }}>
+                            {arr.date} · {arr.time}
+                          </Text>
+                        </View>
+
+                        {/* Layover card */}
+                        {!isLastLeg && nextLeg && (
+                          <View
+                            style={{
+                              marginTop: 8,
+                              padding: 12,
+                              backgroundColor: "#eef2f7",
+                              borderRadius: 10,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                fontWeight: "600",
+                                color: "#475569",
+                              }}
+                            >
+                              Layover at {leg.arrivalAirport}
+                            </Text>
+
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                color: "#64748b",
+                                marginTop: 2,
+                              }}
+                            >
+                              Duration: {formatLayover(leg.layoverMinutes)}
+                            </Text>
+
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: "#64748b",
+                                marginTop: 4,
+                              }}
+                            >
+                              Next flight departs at{" "}
+                              {formatDateTime(nextLeg.departureTime).time}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </Pressable>
+            </View>
           );
         }}
       />
 
-      {/* Add Journey button */}
+      {/* Add Journey */}
       <View
         style={{
           position: "absolute",
@@ -154,6 +284,6 @@ export default function JourneyListScreen({ navigation }: any) {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

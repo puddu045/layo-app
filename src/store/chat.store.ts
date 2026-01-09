@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+/* ---------- Types ---------- */
+
 export type ChatSummary = {
   id: string;
   matchId: string;
@@ -8,9 +10,16 @@ export type ChatSummary = {
 
   match: {
     id: string;
-    journeyLegId: string;
+
+    senderJourneyId: string;
+    receiverJourneyId: string;
+
     senderId: string;
     receiverId: string;
+
+    flightNumber: string;
+    departureTime: string;
+
     status: string;
     createdAt: string;
     updatedAt: string;
@@ -30,49 +39,51 @@ export type ChatSummary = {
 };
 
 type ChatState = {
-  // 🔑 Chats scoped per journey leg
-  chatsByJourneyLegId: Record<string, ChatSummary[]>;
+  // 🔑 Chats scoped per journey
+  chatsByJourneyId: Record<string, ChatSummary[]>;
 
-  // 🔄 Loading scoped per journey leg
-  loadingByJourneyLegId: Record<string, boolean>;
+  // 🔄 Loading scoped per journey
+  loadingByJourneyId: Record<string, boolean>;
 
   // ✅ Actions
-  setChatsForLeg: (journeyLegId: string, chats: ChatSummary[]) => void;
-  setLoadingForLeg: (journeyLegId: string, loading: boolean) => void;
-  clearChatsForLeg: (journeyLegId: string) => void;
+  setChatsForJourney: (journeyId: string, chats: ChatSummary[]) => void;
+  setLoadingForJourney: (journeyId: string, loading: boolean) => void;
+  clearChatsForJourney: (journeyId: string) => void;
   clearAllChats: () => void;
 };
 
+/* ---------- Store ---------- */
+
 export const useChatStore = create<ChatState>((set) => ({
-  chatsByJourneyLegId: {},
-  loadingByJourneyLegId: {},
+  chatsByJourneyId: {},
+  loadingByJourneyId: {},
 
-  setChatsForLeg: (journeyLegId, chats) =>
+  setChatsForJourney: (journeyId, chats) =>
     set((state) => ({
-      chatsByJourneyLegId: {
-        ...state.chatsByJourneyLegId,
-        [journeyLegId]: chats,
+      chatsByJourneyId: {
+        ...state.chatsByJourneyId,
+        [journeyId]: chats,
       },
     })),
 
-  setLoadingForLeg: (journeyLegId, loading) =>
+  setLoadingForJourney: (journeyId, loading) =>
     set((state) => ({
-      loadingByJourneyLegId: {
-        ...state.loadingByJourneyLegId,
-        [journeyLegId]: loading,
+      loadingByJourneyId: {
+        ...state.loadingByJourneyId,
+        [journeyId]: loading,
       },
     })),
 
-  clearChatsForLeg: (journeyLegId) =>
+  clearChatsForJourney: (journeyId) =>
     set((state) => {
-      const next = { ...state.chatsByJourneyLegId };
-      delete next[journeyLegId];
-      return { chatsByJourneyLegId: next };
+      const next = { ...state.chatsByJourneyId };
+      delete next[journeyId];
+      return { chatsByJourneyId: next };
     }),
 
   clearAllChats: () =>
     set({
-      chatsByJourneyLegId: {},
-      loadingByJourneyLegId: {},
+      chatsByJourneyId: {},
+      loadingByJourneyId: {},
     }),
 }));

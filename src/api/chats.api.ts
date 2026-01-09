@@ -1,9 +1,8 @@
 import api from "./client";
 
-export const fetchChatsByJourneyLeg = async (journeyLegId: string) => {
-  const res = await api.get(`/chats/by-leg/${journeyLegId}`, {
-    params: { journeyLegId },
+export const fetchChatsByJourney = async (journeyId: string) => {
+  const res = await api.get(`/chats/journey/${journeyId}`, {
+    params: { journeyId },
   });
-
   return res.data;
 };

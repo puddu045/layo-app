@@ -1,10 +1,8 @@
-import { create } from "zustand";
-
 export type RequestSummary = {
   id: string;
 
-  senderJourneyLegId: string;
-  receiverJourneyLegId: string;
+  senderJourneyId: string;
+  receiverJourneyId: string;
 
   senderId: string;
   receiverId: string;
@@ -23,65 +21,70 @@ export type RequestSummary = {
     lastName: string;
   };
 
-  receiver: {
+  receiver?: {
     id: string;
     firstName: string;
     lastName: string;
   };
 
-  senderJourneyLeg: {
+  senderJourney: {
     id: string;
-    journeyId: string;
-    sequence: number;
+    userId: string;
+    journeyType: "DIRECT" | "LAYOVER";
     flightNumber: string;
     departureAirport: string;
     arrivalAirport: string;
     departureTime: string;
     arrivalTime: string;
-    layoverMinutes?: number;
     createdAt: string;
+    updatedAt: string;
   };
 
-  receiverJourneyLeg: {
+  receiverJourney: {
     id: string;
-    journeyId: string;
-    sequence: number;
+    userId: string;
+    journeyType: "DIRECT" | "LAYOVER";
     flightNumber: string;
     departureAirport: string;
     arrivalAirport: string;
     departureTime: string;
     arrivalTime: string;
-    layoverMinutes?: number;
     createdAt: string;
+    updatedAt: string;
   };
 };
 
 type RequestState = {
-  requestsByLegId: {
-    [journeyLegId: string]: {
+  requestsByJourneyId: {
+    [journeyId: string]: {
       data: RequestSummary[];
       loading: boolean;
       error?: string;
     };
   };
 
-  setRequestsForLeg: (journeyLegId: string, requests: RequestSummary[]) => void;
+  setRequestsForJourney: (
+    journeyId: string,
+    requests: RequestSummary[]
+  ) => void;
 
-  setLoadingForLeg: (journeyLegId: string, loading: boolean) => void;
+  setLoadingForJourney: (journeyId: string, loading: boolean) => void;
 
-  clearRequestsForLeg: (journeyLegId: string) => void;
+  clearRequestsForJourney: (journeyId: string) => void;
 
   clearAllRequests: () => void;
 };
 
-export const useRequestStore = create<RequestState>((set) => ({
-  requestsByLegId: {},
+import { create } from "zustand";
 
-  setRequestsForLeg: (journeyLegId, requests) =>
+export const useRequestStore = create<RequestState>((set) => ({
+  requestsByJourneyId: {},
+
+  setRequestsForJourney: (journeyId, requests) =>
     set((state) => ({
-      requestsByLegId: {
-        ...state.requestsByLegId,
-        [journeyLegId]: {
+      requestsByJourneyId: {
+        ...state.requestsByJourneyId,
+        [journeyId]: {
           data: requests,
           loading: false,
           error: undefined,
@@ -89,27 +92,27 @@ export const useRequestStore = create<RequestState>((set) => ({
       },
     })),
 
-  setLoadingForLeg: (journeyLegId, loading) =>
+  setLoadingForJourney: (journeyId, loading) =>
     set((state) => ({
-      requestsByLegId: {
-        ...state.requestsByLegId,
-        [journeyLegId]: {
-          data: state.requestsByLegId[journeyLegId]?.data ?? [],
+      requestsByJourneyId: {
+        ...state.requestsByJourneyId,
+        [journeyId]: {
+          data: state.requestsByJourneyId[journeyId]?.data ?? [],
           loading,
-          error: state.requestsByLegId[journeyLegId]?.error,
+          error: state.requestsByJourneyId[journeyId]?.error,
         },
       },
     })),
 
-  clearRequestsForLeg: (journeyLegId) =>
+  clearRequestsForJourney: (journeyId) =>
     set((state) => {
-      const copy = { ...state.requestsByLegId };
-      delete copy[journeyLegId];
-      return { requestsByLegId: copy };
+      const copy = { ...state.requestsByJourneyId };
+      delete copy[journeyId];
+      return { requestsByJourneyId: copy };
     }),
 
   clearAllRequests: () =>
     set({
-      requestsByLegId: {},
+      requestsByJourneyId: {},
     }),
 }));
