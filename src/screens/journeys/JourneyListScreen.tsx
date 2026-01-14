@@ -1,23 +1,19 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  KeyboardAvoidingView,
+} from "react-native";
 import { useJourneyStore } from "../../store/journey.store";
 import { getJourneysForUser } from "../../api/journeys.api";
 import { useCallback, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuthStore } from "../../store/auth.store";
-import { logoutApi } from "../../api/auth.api";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { resetChatSession } from "../../utils/resetChatSession";
 
 export default function JourneyListScreen({ navigation }: any) {
   const { journeys, setJourneys, setLoading } = useJourneyStore();
   const clearAuth = useAuthStore((s) => s.clearAuth);
-
-  async function logout() {
-    resetChatSession();
-    clearAuth();
-    await logoutApi();
-  }
 
   const loadJourneys = async () => {
     try {
@@ -62,8 +58,10 @@ export default function JourneyListScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
-      {/* Header */}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#f5f6f8", marginTop: 20 }}
+    >
+      {/* Header
       <View
         style={{
           paddingHorizontal: 16,
@@ -78,12 +76,15 @@ export default function JourneyListScreen({ navigation }: any) {
           My Journeys
         </Text>
         <View style={{ flex: 1, alignItems: "flex-end" }}>
-          <Pressable onPress={logout} hitSlop={10}>
+          <Pressable
+            onPress={() => navigation.navigate("Profile")}
+            hitSlop={10}
+          >
             <Ionicons name="log-out-outline" size={22} color="#2563eb" />
           </Pressable>
         </View>
       </View>
-
+ */}
       <FlatList
         data={journeys}
         keyExtractor={(item) => item.id}
@@ -284,6 +285,6 @@ export default function JourneyListScreen({ navigation }: any) {
           </Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }

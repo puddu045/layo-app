@@ -3,22 +3,13 @@ import MatchListScreen from "../screens/matches/MatchListScreen";
 import RequestListScreen from "../screens/matches/RequestListScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable } from "react-native";
-import { logoutApi } from "../api/auth.api";
 
-import { resetChatSession } from "../utils/resetChatSession";
-import { useAuthStore } from "../store/auth.store";
 import ChatsStack from "./ChatsStack";
 
 const Tab = createBottomTabNavigator();
 
-export default function JourneyTabsScreen({ route }: any) {
+export default function JourneyTabsScreen({ navigation, route }: any) {
   const { journeyId } = route.params;
-
-  async function logout() {
-    resetChatSession();
-    useAuthStore.getState().clearAuth();
-    await logoutApi();
-  }
 
   return (
     <Tab.Navigator
@@ -26,8 +17,12 @@ export default function JourneyTabsScreen({ route }: any) {
       screenOptions={{
         headerTitleAlign: "center",
         headerRight: () => (
-          <Pressable onPress={logout} hitSlop={10} style={{ marginRight: 16 }}>
-            <Ionicons name="log-out-outline" size={22} color="#2563eb" />
+          <Pressable
+            onPress={() => navigation.navigate("Profile")}
+            hitSlop={10}
+            style={{ marginRight: 16 }}
+          >
+            <Ionicons name="person-circle-outline" size={22} color="#2563eb" />
           </Pressable>
         ),
       }}

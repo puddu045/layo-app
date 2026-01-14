@@ -17,33 +17,33 @@ export default function RegisterScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
+  // const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  // const [showPicker, setShowPicker] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-  const formatForDisplay = (date: Date) => {
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}-${mm}-${yyyy}`;
-  };
+  // const formatForDisplay = (date: Date) => {
+  //   const dd = String(date.getDate()).padStart(2, "0");
+  //   const mm = String(date.getMonth() + 1).padStart(2, "0");
+  //   const yyyy = date.getFullYear();
+  //   return `${dd}-${mm}-${yyyy}`;
+  // };
 
-  const formatForBackend = (date: Date) => {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  // const formatForBackend = (date: Date) => {
+  //   const yyyy = date.getFullYear();
+  //   const mm = String(date.getMonth() + 1).padStart(2, "0");
+  //   const dd = String(date.getDate()).padStart(2, "0");
+  //   return `${yyyy}-${mm}-${dd}`;
+  // };
 
   const handleRegister = async () => {
     setError("");
 
-    if (!dateOfBirth) {
-      setError("Please select your date of birth");
-      return;
-    }
+    // if (!dateOfBirth) {
+    //   setError("Please select your date of birth");
+    //   return;
+    // }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -56,7 +56,7 @@ export default function RegisterScreen() {
         lastName,
         email,
         password,
-        dateOfBirth: formatForBackend(dateOfBirth),
+        // dateOfBirth: formatForBackend(dateOfBirth),
       });
 
       navigation.navigate("Login");
@@ -113,7 +113,7 @@ export default function RegisterScreen() {
         style={inputStyle}
       />
 
-      {/* Date of Birth Picker */}
+      {/* Date of Birth Picker
       <Pressable onPress={() => setShowPicker(true)} style={inputStyle}>
         <Text style={{ color: dateOfBirth ? "#000" : "#999" }}>
           {dateOfBirth ? formatForDisplay(dateOfBirth) : "Date of birth"}
@@ -132,6 +132,7 @@ export default function RegisterScreen() {
           }}
         />
       )}
+         */}
 
       <TextInput
         placeholder="Password"

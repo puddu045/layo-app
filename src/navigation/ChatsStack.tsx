@@ -17,22 +17,20 @@ export type StackParamList = {
 
 const Stack = createNativeStackNavigator<StackParamList>();
 
-export default function ChatsStack({ route }: any) {
+export default function ChatsStack({ navigation, route }: any) {
   const { journeyId } = route.params;
-
-  async function logout() {
-    resetChatSession();
-    useAuthStore.getState().clearAuth();
-    await logoutApi();
-  }
 
   return (
     <Stack.Navigator
       screenOptions={{
         headerTitleAlign: "center",
         headerRight: () => (
-          <Pressable onPress={logout} hitSlop={10} style={{ marginRight: 16 }}>
-            <Ionicons name="log-out-outline" size={22} color="#2563eb" />
+          <Pressable
+            onPress={() => navigation.navigate("Profile")}
+            hitSlop={10}
+            style={{ marginRight: 16 }}
+          >
+            <Ionicons name="person-circle-outline" size={22} color="#2563eb" />
           </Pressable>
         ),
       }}

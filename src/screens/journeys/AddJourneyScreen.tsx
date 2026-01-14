@@ -5,6 +5,7 @@ import {
   TextInput,
   FlatList,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -112,16 +113,16 @@ export default function AddJourneyScreen({ navigation }: any) {
 
   return (
     <>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
         <FlatList
           data={legs}
           keyExtractor={(item) => item.sequence.toString()}
           contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
           ListHeaderComponent={
             <View>
-              <Text style={{ fontSize: 18, fontWeight: "600" }}>
+              {/* <Text style={{ fontSize: 18, fontWeight: "600" }}>
                 Add Journey
-              </Text>
+              </Text> */}
               <Text style={{ color: "#666", marginTop: 4 }}>
                 Add each flight leg in order
               </Text>
@@ -308,7 +309,7 @@ export default function AddJourneyScreen({ navigation }: any) {
             }}
           />
         )}
-      </SafeAreaView>
+      </KeyboardAvoidingView>
     </>
   );
 }

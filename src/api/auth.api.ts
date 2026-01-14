@@ -15,7 +15,7 @@ type RegisterPayload = {
   lastName: string;
   email: string;
   password: string;
-  dateOfBirth: string; // YYYY-MM-DD
+  // dateOfBirth: string; // YYYY-MM-DD
 };
 
 export const registerApi = async (payload: RegisterPayload) => {
