@@ -4,6 +4,10 @@ import { useAuthStore } from "../../store/auth.store";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { connectSocket } from "../../socket/socket";
+import {
+  registerForPushNotifications,
+  savePushTokenToBackend,
+} from "../../utils/pushNotifications";
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -19,6 +23,11 @@ export default function LoginScreen() {
     try {
       const data = await loginApi(email, password);
       setAuth(data.accessToken, data.user);
+      const token = await registerForPushNotifications();
+
+      if (token) {
+        await savePushTokenToBackend(token);
+      }
       connectSocket(data.accessToken);
     } catch (err) {
       console.log(err);
@@ -46,6 +55,7 @@ export default function LoginScreen() {
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholderTextColor="#9ca3af" // light gray
         style={inputStyle}
       />
 
@@ -54,6 +64,7 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        placeholderTextColor="#9ca3af"
         style={inputStyle}
       />
 
@@ -72,6 +83,8 @@ export default function LoginScreen() {
 const inputStyle = {
   borderWidth: 1,
   borderColor: "#ccc",
+  // backgroundColor: "#111827",
+  color: "#333",
   padding: 12,
   marginBottom: 12,
   borderRadius: 6,
