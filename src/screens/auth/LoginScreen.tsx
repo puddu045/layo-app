@@ -4,10 +4,6 @@ import { useAuthStore } from "../../store/auth.store";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { connectSocket } from "../../socket/socket";
-import {
-  registerForPushNotifications,
-  savePushTokenToBackend,
-} from "../../utils/pushNotifications";
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -23,11 +19,7 @@ export default function LoginScreen() {
     try {
       const data = await loginApi(email, password);
       setAuth(data.accessToken, data.user);
-      const token = await registerForPushNotifications();
 
-      if (token) {
-        await savePushTokenToBackend(token);
-      }
       connectSocket(data.accessToken);
     } catch (err) {
       console.log(err);

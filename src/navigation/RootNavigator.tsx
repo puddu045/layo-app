@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuthStore } from "../store/auth.store";
 import AuthNavigator from "./AuthNavigator";
@@ -7,6 +7,7 @@ import axios from "axios";
 import api from "../api/client";
 import { URL_Backend } from "../utils/backendURL";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { registerForPushNotifications } from "../utils/pushNotifications";
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -20,7 +21,7 @@ export default function RootNavigator() {
         const res = await axios.post(
           `${URL_Backend}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
         const meRes = await api.get("/users/user", {
           headers: {
@@ -35,6 +36,18 @@ export default function RootNavigator() {
 
     bootstrap();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    (async () => {
+      try {
+        await registerForPushNotifications();
+      } catch (e) {
+        console.log("Push registration failed", e);
+      }
+    })();
+  }, [isAuthenticated]);
 
   if (!isBootstrapped) {
     return null; // or a Splash screen
