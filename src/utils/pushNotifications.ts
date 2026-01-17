@@ -2,6 +2,13 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import api from "../api/client";
+
+export async function savePushTokenToBackend(token: string) {
+  return api.post("/users/push-token", {
+    token,
+  });
+}
 
 export async function registerForPushNotifications() {
   if (!Device.isDevice) {

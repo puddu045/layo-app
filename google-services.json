@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "491783066679",
+    "project_id": "layo-56572",
+    "storage_bucket": "layo-56572.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:491783066679:android:451e92b35af8c76d135bb2",
+        "android_client_info": {
+          "package_name": "com.anonymous.Layo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAgOOzhzT3u4FZC4IB0eq6CzFcHPgim0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -7,7 +7,10 @@ import axios from "axios";
 import api from "../api/client";
 import { URL_Backend } from "../utils/backendURL";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { registerForPushNotifications } from "../utils/pushNotifications";
+import {
+  registerForPushNotifications,
+  savePushTokenToBackend,
+} from "../utils/pushNotifications";
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -42,9 +45,15 @@ export default function RootNavigator() {
 
     (async () => {
       try {
-        await registerForPushNotifications();
+        const pushToken = await registerForPushNotifications();
+
+        if (!pushToken) return;
+
+        console.log("📤 Saving push token:", pushToken);
+        await savePushTokenToBackend(pushToken);
+        console.log("✅ Push token saved");
       } catch (e) {
-        console.log("Push registration failed", e);
+        console.log("❌ Push registration failed", e);
       }
     })();
   }, [isAuthenticated]);
