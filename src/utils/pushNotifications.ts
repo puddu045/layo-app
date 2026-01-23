@@ -1,17 +1,27 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 import api from "../api/client";
 
 export async function savePushTokenToBackend(token: string) {
-  await api.post("/users/push-token", {
+  return api.post("/users/push-token", {
     token,
   });
 }
 
 export async function registerForPushNotifications() {
   if (!Device.isDevice) {
+    console.log("❌ Not a physical device");
     return null;
+  }
+
+  // REQUIRED on Android
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+    });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -24,14 +34,24 @@ export async function registerForPushNotifications() {
   }
 
   if (finalStatus !== "granted") {
+    console.log("❌ Notification permission not granted");
     return null;
   }
 
-  const token = (
-    await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig?.extra?.eas?.projectId,
-    })
-  ).data;
+  const projectId =
+    Constants.easConfig?.projectId ??
+    Constants.expoConfig?.extra?.eas?.projectId;
 
-  return token;
+  console.log("PROJECT ID USED:", projectId);
+
+  if (!projectId) {
+    console.log("❌ Missing EAS projectId");
+    return null;
+  }
+
+  const tokenResponse = await Notifications.getExpoPushTokenAsync({
+    projectId,
+  });
+
+  return tokenResponse.data;
 }
