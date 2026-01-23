@@ -3,9 +3,6 @@ import ChatListScreen from "../screens/chats/ChatListScreen";
 import ChatScreen from "../screens/chats/ChatScreen";
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { resetChatSession } from "../utils/resetChatSession";
-import { useAuthStore } from "../store/auth.store";
-import { logoutApi } from "../api/auth.api";
 
 export type StackParamList = {
   Chats: {};
@@ -18,7 +15,7 @@ export type StackParamList = {
 const Stack = createNativeStackNavigator<StackParamList>();
 
 export default function ChatsStack({ navigation, route }: any) {
-  const { journeyId } = route.params;
+  const journeyId = route?.params?.journeyId;
 
   return (
     <Stack.Navigator

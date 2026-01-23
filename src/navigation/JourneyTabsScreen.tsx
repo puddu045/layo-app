@@ -9,7 +9,7 @@ import ChatsStack from "./ChatsStack";
 const Tab = createBottomTabNavigator();
 
 export default function JourneyTabsScreen({ navigation, route }: any) {
-  const { journeyId } = route.params;
+  const journeyId = route?.params?.journeyId;
 
   return (
     <Tab.Navigator

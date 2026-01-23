@@ -8,6 +8,7 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  AppState,
 } from "react-native";
 import {
   fetchMessages,
@@ -19,10 +20,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getSocket } from "../../socket/socket";
 import { useFocusEffect } from "@react-navigation/native";
+import { useChatStore } from "../../store/chat.store";
 
 export default function ChatScreen({ route }: any) {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const markChatAsReadInStore = useChatStore((s) => s.markChatAsReadInStore);
 
   const user = useAuthStore((s) => s.user);
   if (!user) return null;
@@ -63,7 +66,8 @@ export default function ChatScreen({ route }: any) {
       const socket = getSocket();
       if (!socket) return;
       socket.emit("mark_chat_read", { chatId });
-    }, [chatId])
+      markChatAsReadInStore(chatId);
+    }, [chatId]),
   );
 
   const loadMessages = useCallback(async () => {
@@ -80,14 +84,31 @@ export default function ChatScreen({ route }: any) {
 
   /* ---------------- socket: join room ---------------- */
 
+  useFocusEffect(
+    useCallback(() => {
+      const socket = getSocket();
+      if (!socket) return;
+
+      socket.emit("join_chat", { chatId });
+
+      return () => {
+        socket.emit("leave_chat", { chatId });
+      };
+    }, [chatId]),
+  );
+
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
-    socket.emit("join_chat", { chatId });
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state !== "active") {
+        socket.emit("leave_chat", { chatId });
+      }
+    });
 
     return () => {
-      socket.emit("leave_chat", { chatId });
+      sub.remove();
     };
   }, [chatId]);
 

@@ -42,6 +42,8 @@ export async function registerForPushNotifications() {
     Constants.easConfig?.projectId ??
     Constants.expoConfig?.extra?.eas?.projectId;
 
+  console.log("PROJECT ID USED:", projectId);
+
   if (!projectId) {
     console.log("❌ Missing EAS projectId");
     return null;
@@ -50,8 +52,6 @@ export async function registerForPushNotifications() {
   const tokenResponse = await Notifications.getExpoPushTokenAsync({
     projectId,
   });
-
-  console.log("✅ Expo push token:", tokenResponse.data);
 
   return tokenResponse.data;
 }

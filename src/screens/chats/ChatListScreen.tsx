@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { Text, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { fetchChatsByJourney } from "../../api/chats.api";
 import { useChatStore } from "../../store/chat.store";
@@ -14,41 +14,32 @@ export default function ChatListScreen({ navigation, route }: any) {
   const loading =
     useChatStore((s) => s.loadingByJourneyId[journeyId ?? ""]) ?? false;
 
-  // 🔧 Correct setters
-  const setChatsForLeg = useChatStore((s) => s.setChatsForJourney);
-  const setLoadingForLeg = useChatStore((s) => s.setLoadingForJourney);
+  const setChatsForJourney = useChatStore((s) => s.setChatsForJourney);
+  const setLoadingForJourney = useChatStore((s) => s.setLoadingForJourney);
 
   const loadChats = async () => {
     if (!journeyId) return;
 
     try {
-      setLoadingForLeg(journeyId, true);
+      setLoadingForJourney(journeyId, true);
       const data = await fetchChatsByJourney(journeyId);
-      setChatsForLeg(journeyId, data);
+      setChatsForJourney(journeyId, data);
     } finally {
-      setLoadingForLeg(journeyId, false);
+      setLoadingForJourney(journeyId, false);
     }
   };
 
-  // Load when journey changes
+  // Initial load
   useEffect(() => {
     loadChats();
   }, [journeyId]);
 
-  // Reload when screen gains focus
+  // Reload on focus (safe to keep)
   useFocusEffect(
     useCallback(() => {
       loadChats();
-    }, [journeyId])
+    }, [journeyId]),
   );
-
-  // Polling every 15 seconds
-  useEffect(() => {
-    if (!journeyId) return;
-
-    const interval = setInterval(loadChats, 15000);
-    return () => clearInterval(interval);
-  }, [journeyId]);
 
   if (!journeyId) {
     return (
@@ -75,7 +66,6 @@ export default function ChatListScreen({ navigation, route }: any) {
               name: firstName,
             });
           }}
-          onPress={() => {}}
         />
       )}
       ListEmptyComponent={
