@@ -71,8 +71,19 @@ export default function ChatRow({ chat, onPress, onSelectUser }: any) {
       <View style={{ flex: 1 }}>
         <Text style={{ fontWeight: "600", fontSize: 16 }}>{fullName}</Text>
 
-        <Text numberOfLines={1} style={{ color: "#666", marginTop: 4 }}>
-          {chat.unreadCount > 0 ? "New messages" : "No new messages yet"}
+        <Text
+          numberOfLines={1}
+          style={{
+            color: chat.unreadCount > 0 ? "#111" : "#666",
+            marginTop: 4,
+            fontWeight: chat.unreadCount > 0 ? "500" : "400",
+          }}
+        >
+          {chat.lastMessage
+            ? chat.lastMessage.senderId === user.id
+              ? `You: ${chat.lastMessage.content}`
+              : chat.lastMessage.content
+            : "No messages yet"}
         </Text>
       </View>
 

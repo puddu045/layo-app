@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
 /* ---------- Types ---------- */
-console.log("🟢 chat store instance created");
 
 export type ChatSummary = {
   id: string;
@@ -9,6 +8,13 @@ export type ChatSummary = {
   createdAt: string;
   unreadCount: number;
   otherUserProfilePhotoUrl?: string | null;
+
+  lastMessage: {
+    id: string;
+    content: string;
+    senderId: string;
+    createdAt: Date;
+  } | null;
 
   match: {
     id: string;

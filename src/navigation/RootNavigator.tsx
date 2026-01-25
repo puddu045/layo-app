@@ -62,8 +62,6 @@ export default function RootNavigator() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    console.log("🔄 Fetching profile after auth");
-
     fetchMyProfile();
   }, [isAuthenticated]);
 
@@ -79,13 +77,10 @@ export default function RootNavigator() {
     const socket = connectSocket(accessToken);
 
     socket.on("connect", () => {
-      console.log("✅ socket connected (RootNavigator)", socket.id);
       registerChatListeners();
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔌 socket disconnected");
-    });
+    socket.on("disconnect", () => {});
 
     return () => {
       socket.disconnect();
@@ -111,7 +106,6 @@ export default function RootNavigator() {
       if (!token) return;
 
       try {
-        console.log("📤 Saving push token:", token);
         await savePushTokenToBackend(token);
       } catch (e) {
         console.log("❌ Saving push token failed", e);
