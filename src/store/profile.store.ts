@@ -59,21 +59,16 @@ export const useUserProfileStore = create<UserProfileState>((set) => ({
   },
 
   updateProfile: async (data) => {
-    console.log("Updating profile with:", data);
-
     set({ loading: true, error: null });
 
     try {
       const res = await api.patch("/users/me/profile", data);
-      console.log("Backend response:", res.data);
 
       set({
         profile: res.data,
         loading: false,
       });
     } catch (err: any) {
-      console.log("Update profile error:", err?.response);
-
       set({
         error: err?.response?.data?.message ?? "Failed to update profile",
         loading: false,

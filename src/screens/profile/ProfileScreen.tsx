@@ -344,7 +344,9 @@ export default function ProfileScreen() {
 
           {profile?.profilePhotoUrl && (
             <Image
-              source={{ uri: `${URL_Backend}${profile.profilePhotoUrl}` }}
+              source={{
+                uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+              }}
               style={{ width: "100%", height: "80%", resizeMode: "contain" }}
             />
           )}
