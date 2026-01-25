@@ -1,8 +1,10 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ChatListScreen from "../screens/chats/ChatListScreen";
 import ChatScreen from "../screens/chats/ChatScreen";
-import { Pressable } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useUserProfileStore } from "../store/profile.store";
+import { URL_Backend } from "../utils/backendURL";
 
 export type StackParamList = {
   Chats: {};
@@ -16,6 +18,7 @@ const Stack = createNativeStackNavigator<StackParamList>();
 
 export default function ChatsStack({ navigation, route }: any) {
   const journeyId = route?.params?.journeyId;
+  const profile = useUserProfileStore((s) => s.profile);
 
   return (
     <Stack.Navigator
@@ -27,7 +30,24 @@ export default function ChatsStack({ navigation, route }: any) {
             hitSlop={10}
             style={{ marginRight: 16 }}
           >
-            <Ionicons name="person-circle-outline" size={22} color="#2563eb" />
+            {profile?.profilePhotoUrl ? (
+              <Image
+                source={{
+                  uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                }}
+              />
+            ) : (
+              <Ionicons
+                name="person-circle-outline"
+                size={26}
+                color="#2563eb"
+              />
+            )}
           </Pressable>
         ),
       }}

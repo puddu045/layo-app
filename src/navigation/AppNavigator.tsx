@@ -4,13 +4,17 @@ import JourneyTabsScreen from "./JourneyTabsScreen";
 import AddJourneyScreen from "../screens/journeys/AddJourneyScreen";
 import ProfileListScreen from "../screens/profile/ProfileListScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
-import { Pressable } from "react-native";
+import { Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "../utils/logout";
+import { useUserProfileStore } from "../store/profile.store";
+import { URL_Backend } from "../utils/backendURL";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator({ navigation }: any) {
+  const profile = useUserProfileStore((s) => s.profile);
+
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -25,11 +29,24 @@ export default function AppNavigator({ navigation }: any) {
               hitSlop={10}
               style={{ marginRight: 16 }}
             >
-              <Ionicons
-                name="person-circle-outline"
-                size={22}
-                color="#2563eb"
-              />
+              {profile?.profilePhotoUrl ? (
+                <Image
+                  source={{
+                    uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                  }}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                  }}
+                />
+              ) : (
+                <Ionicons
+                  name="person-circle-outline"
+                  size={26}
+                  color="#2563eb"
+                />
+              )}
             </Pressable>
           ),
         })}

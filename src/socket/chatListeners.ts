@@ -1,18 +1,19 @@
 import { getSocket } from "./socket";
 import { useChatStore } from "../store/chat.store";
 
-let registered = false;
+console.log("🧩 registerChatListeners called");
+console.log("🟢 chat store used by socket");
 
 export function registerChatListeners() {
-  if (registered) return;
-  registered = true;
-
   const socket = getSocket();
   if (!socket) return;
 
-  socket.on("new_message", (message: any) => {
-    console.log("🔔 new_message (global)", message);
+  console.log("🧷 registering new_message listener");
 
+  socket.off("new_message");
+
+  socket.on("new_message", (message) => {
+    console.log("🔔 new_message (socket)", message);
     useChatStore.getState().applyIncomingMessage(message);
   });
 }

@@ -2,7 +2,9 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MatchListScreen from "../screens/matches/MatchListScreen";
 import RequestListScreen from "../screens/matches/RequestListScreen";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable } from "react-native";
+import { Image, Pressable } from "react-native";
+import { useUserProfileStore } from "../store/profile.store";
+import { URL_Backend } from "../utils/backendURL";
 
 import ChatsStack from "./ChatsStack";
 
@@ -10,6 +12,7 @@ const Tab = createBottomTabNavigator();
 
 export default function JourneyTabsScreen({ navigation, route }: any) {
   const journeyId = route?.params?.journeyId;
+  const profile = useUserProfileStore((s) => s.profile);
 
   return (
     <Tab.Navigator
@@ -22,7 +25,24 @@ export default function JourneyTabsScreen({ navigation, route }: any) {
             hitSlop={10}
             style={{ marginRight: 16 }}
           >
-            <Ionicons name="person-circle-outline" size={22} color="#2563eb" />
+            {profile?.profilePhotoUrl ? (
+              <Image
+                source={{
+                  uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                }}
+              />
+            ) : (
+              <Ionicons
+                name="person-circle-outline"
+                size={26}
+                color="#2563eb"
+              />
+            )}
           </Pressable>
         ),
       }}

@@ -1,6 +1,5 @@
 import { io, Socket } from "socket.io-client";
 import { URL_Backend } from "../utils/backendURL";
-import { registerChatListeners } from "./chatListeners";
 
 let socket: Socket | null = null;
 
@@ -17,7 +16,6 @@ export function connectSocket(token: string) {
       token,
     },
   });
-  registerChatListeners();
   socket.on("connect", () => {});
 
   socket.on("disconnect", (reason) => {});

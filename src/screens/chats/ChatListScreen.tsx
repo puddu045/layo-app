@@ -8,8 +8,9 @@ import ChatRow from "../../components/ChatRow";
 export default function ChatListScreen({ navigation, route }: any) {
   const journeyId: string | undefined = route?.params?.journeyId;
 
-  // 🔑 Read scoped state
-  const chats = useChatStore((s) => s.chatsByJourneyId[journeyId ?? ""]) ?? [];
+  const chatsByJourneyId = useChatStore((s) => s.chatsByJourneyId);
+
+  const chats = chatsByJourneyId[journeyId ?? ""] ?? [];
 
   const loading =
     useChatStore((s) => s.loadingByJourneyId[journeyId ?? ""]) ?? false;
@@ -30,9 +31,14 @@ export default function ChatListScreen({ navigation, route }: any) {
   };
 
   // Initial load
+
   useEffect(() => {
     loadChats();
   }, [journeyId]);
+
+  // useEffect(() => {
+  //   console.log("🔁 chats changed", chats);
+  // }, [chats]);
 
   // Reload on focus (safe to keep)
   useFocusEffect(
@@ -56,6 +62,7 @@ export default function ChatListScreen({ navigation, route }: any) {
   return (
     <FlatList
       data={chats}
+      extraData={chats.map((c) => c.unreadCount).join(",")}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <ChatRow

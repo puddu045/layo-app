@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 /* ---------- Types ---------- */
+console.log("🟢 chat store instance created");
 
 export type ChatSummary = {
   id: string;
@@ -83,40 +84,41 @@ export const useChatStore = create<ChatState>((set) => ({
       delete next[journeyId];
       return { chatsByJourneyId: next };
     }),
+
   applyIncomingMessage: (message) =>
     set((state) => {
-      const { chatId, senderId } = message;
+      const { chatId } = message;
 
-      const updated: typeof state.chatsByJourneyId = {};
+      // clone the root object ONCE
+      const nextChatsByJourneyId = { ...state.chatsByJourneyId };
 
       for (const journeyId in state.chatsByJourneyId) {
         const chats = state.chatsByJourneyId[journeyId];
         const index = chats.findIndex((c) => c.id === chatId);
 
-        if (index === -1) {
-          updated[journeyId] = chats;
-          continue;
-        }
+        if (index === -1) continue;
 
         const chat = chats[index];
 
         const updatedChat = {
           ...chat,
-          unreadCount:
-            senderId === chat.match.sender.id ||
-            senderId === chat.match.receiver.id
-              ? chat.unreadCount + 1
-              : chat.unreadCount,
+          unreadCount: chat.unreadCount + 1, // ignoring sender logic as requested
           updatedAt: message.createdAt,
-          lastMessage: message.content, // if you have this field
+          lastMessage: message,
         };
 
-        const nextChats = [updatedChat, ...chats.filter((_, i) => i !== index)];
+        nextChatsByJourneyId[journeyId] = [
+          updatedChat,
+          ...chats.filter((_, i) => i !== index),
+        ];
 
-        updated[journeyId] = nextChats;
+        // a chat belongs to only one journey, stop early
+        break;
       }
 
-      return { chatsByJourneyId: updated };
+      return {
+        chatsByJourneyId: nextChatsByJourneyId,
+      };
     }),
 
   markChatAsReadInStore: (chatId) =>

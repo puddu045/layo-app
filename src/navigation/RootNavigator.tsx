@@ -1,20 +1,28 @@
 import { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import axios from "axios";
+import * as Notifications from "expo-notifications";
+
 import { navigationRef } from "./navigationRef";
-import { useAuthStore } from "../store/auth.store";
 import AuthNavigator from "./AuthNavigator";
 import AppNavigator from "./AppNavigator";
-import axios from "axios";
+
+import { useAuthStore } from "../store/auth.store";
 import api from "../api/client";
 import { URL_Backend } from "../utils/backendURL";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+
 import {
   registerForPushNotifications,
   savePushTokenToBackend,
 } from "../utils/pushNotifications";
-import * as Notifications from "expo-notifications";
+
 import { NotificationData } from "../notifications/types";
 import { flushPendingNavigation, navigateWhenReady } from "./navigationService";
+
+// 🔌 SOCKET IMPORTS (IMPORTANT)
+import { connectSocket } from "../socket/socket";
+import { registerChatListeners } from "../socket/chatListeners";
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -22,6 +30,9 @@ export default function RootNavigator() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
+  /* -----------------------------
+     AUTH BOOTSTRAP
+  ------------------------------ */
   useEffect(() => {
     const bootstrap = async () => {
       try {
@@ -30,11 +41,13 @@ export default function RootNavigator() {
           {},
           { withCredentials: true },
         );
+
         const meRes = await api.get("/users/user", {
           headers: {
             Authorization: `Bearer ${res.data.accessToken}`,
           },
         });
+
         setAuth(res.data.accessToken, meRes.data);
       } catch {
         clearAuth();
@@ -44,6 +57,34 @@ export default function RootNavigator() {
     bootstrap();
   }, []);
 
+  /* -----------------------------
+     SOCKET INITIALISATION (🔥 FIX)
+  ------------------------------ */
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const accessToken = useAuthStore.getState().accessToken;
+    if (!accessToken) return;
+
+    const socket = connectSocket(accessToken);
+
+    socket.on("connect", () => {
+      console.log("✅ socket connected (RootNavigator)", socket.id);
+      registerChatListeners();
+    });
+
+    socket.on("disconnect", () => {
+      console.log("🔌 socket disconnected");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAuthenticated]);
+
+  /* -----------------------------
+     PUSH TOKEN REGISTRATION
+  ------------------------------ */
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -68,16 +109,20 @@ export default function RootNavigator() {
     })();
   }, [isAuthenticated]);
 
+  /* -----------------------------
+     FOREGROUND NOTIFICATION LISTENER
+  ------------------------------ */
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {},
+      () => {},
     );
 
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, []);
 
+  /* -----------------------------
+     NOTIFICATION TAP HANDLER
+  ------------------------------ */
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(
       (response) => {
@@ -85,7 +130,6 @@ export default function RootNavigator() {
           .data as Partial<NotificationData>;
 
         if (data?.type === "NEW_MESSAGE" && typeof data.chatId === "string") {
-          console.log("navigation reached");
           navigateWhenReady("JourneyTabs", {
             screen: "ChatStack",
             params: {
@@ -103,8 +147,11 @@ export default function RootNavigator() {
     return () => sub.remove();
   }, []);
 
+  /* -----------------------------
+     RENDER
+  ------------------------------ */
   if (!isBootstrapped) {
-    return null; // or a Splash screen
+    return null; // splash screen placeholder
   }
 
   return (
