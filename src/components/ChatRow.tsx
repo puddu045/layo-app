@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import { useAuthStore } from "../store/auth.store";
+import { URL_Backend } from "../utils/backendURL";
 
 export default function ChatRow({ chat, onPress, onSelectUser }: any) {
   const user = useAuthStore((s) => s.user);
@@ -18,6 +19,10 @@ export default function ChatRow({ chat, onPress, onSelectUser }: any) {
     .filter(Boolean)
     .join(" ");
 
+  const profilePhotoUrl = chat.otherUserProfilePhotoUrl
+    ? `${URL_Backend}${chat.otherUserProfilePhotoUrl}?v=${chat.updatedAt}`
+    : null;
+
   return (
     <TouchableOpacity
       onPress={() => {
@@ -32,7 +37,37 @@ export default function ChatRow({ chat, onPress, onSelectUser }: any) {
         borderColor: "#ddd",
       }}
     >
-      {/* LEFT */}
+      {/* AVATAR */}
+      <View style={{ marginRight: 12 }}>
+        {profilePhotoUrl ? (
+          <Image
+            source={{ uri: profilePhotoUrl }}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#e5e7eb",
+            }}
+          />
+        ) : (
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#e5e7eb",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ color: "#6b7280", fontWeight: "600" }}>
+              {showUser.firstName?.[0]?.toUpperCase() ?? "?"}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* CENTER */}
       <View style={{ flex: 1 }}>
         <Text style={{ fontWeight: "600", fontSize: 16 }}>{fullName}</Text>
 

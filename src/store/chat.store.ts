@@ -8,6 +8,7 @@ export type ChatSummary = {
   matchId: string;
   createdAt: string;
   unreadCount: number;
+  otherUserProfilePhotoUrl?: string | null;
 
   match: {
     id: string;

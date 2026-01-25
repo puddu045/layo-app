@@ -36,10 +36,6 @@ export default function ChatListScreen({ navigation, route }: any) {
     loadChats();
   }, [journeyId]);
 
-  // useEffect(() => {
-  //   console.log("🔁 chats changed", chats);
-  // }, [chats]);
-
   // Reload on focus (safe to keep)
   useFocusEffect(
     useCallback(() => {
