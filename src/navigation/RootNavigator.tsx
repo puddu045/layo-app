@@ -7,6 +7,7 @@ import * as Notifications from "expo-notifications";
 import { navigationRef } from "./navigationRef";
 import AuthNavigator from "./AuthNavigator";
 import AppNavigator from "./AppNavigator";
+import { useUserProfileStore } from "../store/profile.store";
 
 import { useAuthStore } from "../store/auth.store";
 import api from "../api/client";
@@ -29,6 +30,7 @@ export default function RootNavigator() {
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
   const setAuth = useAuthStore((s) => s.setAuth);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const fetchMyProfile = useUserProfileStore((s) => s.fetchMyProfile);
 
   /* -----------------------------
      AUTH BOOTSTRAP
@@ -56,6 +58,14 @@ export default function RootNavigator() {
 
     bootstrap();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    console.log("🔄 Fetching profile after auth");
+
+    fetchMyProfile();
+  }, [isAuthenticated]);
 
   /* -----------------------------
      SOCKET INITIALISATION (🔥 FIX)

@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import JourneysListScreen from "../screens/journeys/JourneyListScreen";
 import JourneyTabsScreen from "./JourneyTabsScreen";
 import AddJourneyScreen from "../screens/journeys/AddJourneyScreen";
-import ProfileListScreen from "../screens/profile/ProfileListScreen";
+import ProfileListScreen from "../screens/profile/ProfileScreen";
 import EditProfileScreen from "../screens/profile/EditProfileScreen";
 import { Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
