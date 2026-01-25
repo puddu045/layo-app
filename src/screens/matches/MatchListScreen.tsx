@@ -1,11 +1,12 @@
-import { FlatList, Text, View, Pressable } from "react-native";
+import { Image, FlatList, Text, View, Pressable } from "react-native";
 import { useEffect } from "react";
-import { useMatchStore } from "../../store/match.store";
+import { useMatchStore, User } from "../../store/match.store";
 import {
   fetchMatchesByJourney,
   sendMatchRequest,
   dismissPotentialMatch,
 } from "../../api/matches.api";
+import { URL_Backend } from "../../utils/backendURL";
 
 export default function MatchListScreen({ route }: any) {
   const journeyId = route?.params?.journeyId;
@@ -32,6 +33,7 @@ export default function MatchListScreen({ route }: any) {
     const load = async () => {
       setLoading(true);
       const data = await fetchMatchesByJourney(journeyId);
+      console.log(JSON.stringify(data, null, 2));
       setMatches(data);
     };
 
@@ -49,11 +51,7 @@ export default function MatchListScreen({ route }: any) {
   /* ---------- Merge matches per user ---------- */
 
   type UnifiedMatch = {
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-    };
+    user: User;
     sameFlights: any[];
     layovers: any[];
   };
@@ -105,7 +103,7 @@ export default function MatchListScreen({ route }: any) {
   const removeUserFromMatches = (userId: string) => {
     useMatchStore.getState().setMatches({
       sameFlightMatches: sameFlightMatches.filter(
-        (m) => m.otherUser.id !== userId
+        (m) => m.otherUser.id !== userId,
       ),
       layoverMatches: layoverMatches.filter((m) => m.user.id !== userId),
     });
@@ -161,7 +159,8 @@ export default function MatchListScreen({ route }: any) {
               flightDescriptions[flightDescriptions.length - 1];
 
         const layoverDescriptions = layovers.map(
-          (m) => `${m.arrivalAirport} airport (${m.overlapMinutes} min overlap)`
+          (m) =>
+            `${m.arrivalAirport} airport (${m.overlapMinutes} min overlap)`,
         );
         const layoverLabel =
           layovers.length === 1
@@ -185,10 +184,101 @@ export default function MatchListScreen({ route }: any) {
               elevation: 2,
             }}
           >
-            {/* Name */}
-            <Text style={{ fontSize: 16, fontWeight: "600" }}>
-              {user.firstName} {user.lastName}
-            </Text>
+            {/* Name + actions row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {/* LEFT: Avatar + Name */}
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {user.profile.profilePhotoUrl ? (
+                  <Image
+                    source={{
+                      uri: `${URL_Backend}${user.profile.profilePhotoUrl}`,
+                    }}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: "#e5e7eb",
+                      marginRight: 12,
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: "#e5e7eb",
+                      marginRight: 12,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ fontWeight: "600", color: "#555" }}>
+                      {user.firstName[0]}
+                      {user.lastName?.[0] ?? ""}
+                    </Text>
+                  </View>
+                )}
+
+                <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                  {user.firstName} {user.lastName}
+                </Text>
+              </View>
+
+              {/* RIGHT: Actions */}
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Pressable
+                  onPress={() => handleDismiss(item)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "#fee2e2",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#dc2626",
+                      fontSize: 18,
+                      fontWeight: "700",
+                    }}
+                  >
+                    ✕
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => handleSendRequest(item)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "#dcfce7",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#16a34a",
+                      fontSize: 18,
+                      fontWeight: "700",
+                    }}
+                  >
+                    ✓
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
             {/* Same flight matches */}
             {sameFlights.length > 0 && (
@@ -207,45 +297,6 @@ export default function MatchListScreen({ route }: any) {
                 </Text>
               </View>
             )}
-
-            {/* Actions */}
-            <View
-              style={{
-                flexDirection: "row",
-                marginTop: 14,
-                justifyContent: "space-between",
-              }}
-            >
-              <Pressable
-                onPress={() => handleDismiss(item)}
-                style={{
-                  flex: 1,
-                  padding: 10,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  marginRight: 8,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "#555" }}>Not interested</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => handleSendRequest(item)}
-                style={{
-                  flex: 1,
-                  padding: 10,
-                  borderRadius: 8,
-                  backgroundColor: "#2563eb",
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "600" }}>
-                  Send request
-                </Text>
-              </Pressable>
-            </View>
           </View>
         );
       }}

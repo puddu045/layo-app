@@ -6,6 +6,7 @@ export type User = {
   id: string;
   firstName: string;
   lastName: string;
+  profile: { profilePhotoUrl?: string | null };
 };
 
 export type Journey = {
@@ -60,11 +61,7 @@ export type SameFlightMatch = {
     createdAt: string;
   };
 
-  otherUser: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
+  otherUser: User;
 };
 
 export type LayoverMatch = {
@@ -127,7 +124,7 @@ export const useMatchStore = create<MatchStore>((set) => ({
   removeDiscoveryUser: (userId) =>
     set((state) => ({
       sameFlightMatches: state.sameFlightMatches.filter(
-        (m) => m.otherUser.id !== userId
+        (m) => m.otherUser.id !== userId,
       ),
       layoverMatches: state.layoverMatches.filter((m) => m.user.id !== userId),
     })),
