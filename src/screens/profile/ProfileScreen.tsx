@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,22 @@ import api from "../../api/client";
 import { URL_Backend } from "../../utils/backendURL";
 import { useUserProfileStore } from "../../store/profile.store";
 
+/* -------------------- Gender Enum Mapping -------------------- */
+
+const GENDER_OPTIONS = [
+  { label: "Male", value: "MALE" },
+  { label: "Female", value: "FEMALE" },
+  { label: "Non-binary", value: "NON_BINARY" },
+  { label: "Other", value: "OTHER" },
+  { label: "Prefer not to say", value: "PREFER_NOT_TO_SAY" },
+] as const;
+
+function getGenderLabel(value?: string | null) {
+  return GENDER_OPTIONS.find((g) => g.value === value)?.label ?? "—";
+}
+
+/* -------------------- Helpers -------------------- */
+
 function formatDateDDMMYYYY(date?: string | null) {
   if (!date) return "—";
   const d = new Date(date);
@@ -32,15 +48,15 @@ type ProfileForm = {
   city: string;
   location: string;
   nationality: string;
-  gender: string;
+  gender: string | null;
   dateOfBirth: string | null;
 };
 
 export default function ProfileScreen() {
   const [uploading, setUploading] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
-  const [editingField, setEditingField] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [genderModalVisible, setGenderModalVisible] = useState(false);
 
   const { user, profile, loading, fetchMyProfile, updateProfile } =
     useUserProfileStore();
@@ -50,7 +66,7 @@ export default function ProfileScreen() {
     city: "",
     location: "",
     nationality: "",
-    gender: "",
+    gender: null,
     dateOfBirth: null,
   });
 
@@ -67,7 +83,7 @@ export default function ProfileScreen() {
         city: profile.city ?? "",
         location: profile.location ?? "",
         nationality: profile.nationality ?? "",
-        gender: profile.gender ?? "",
+        gender: profile.gender ?? null,
         dateOfBirth: profile.dateOfBirth ?? null,
       };
 
@@ -93,7 +109,6 @@ export default function ProfileScreen() {
   const handleSave = async () => {
     await updateProfile(form);
     setInitialForm(form);
-    setEditingField(null);
   };
 
   const handleChangePhoto = async () => {
@@ -148,46 +163,50 @@ export default function ProfileScreen() {
     <ScrollView style={{ flex: 1, padding: 20, backgroundColor: "#fff" }}>
       {/* Profile Photo */}
       <View style={{ alignItems: "center", marginBottom: 20 }}>
-        <Pressable onPress={() => setPreviewVisible(true)}>
-          {profile?.profilePhotoUrl ? (
-            <Image
-              source={{
-                uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
-              }}
-              style={{ width: 120, height: 120, borderRadius: 60 }}
-            />
-          ) : (
-            <View
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: "#e5e7eb",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text>Add Photo</Text>
-            </View>
-          )}
-        </Pressable>
+        <View style={{ width: 120, height: 120 }}>
+          <Pressable onPress={() => setPreviewVisible(true)}>
+            {profile?.profilePhotoUrl ? (
+              <Image
+                source={{
+                  uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                }}
+                style={{ width: 120, height: 120, borderRadius: 60 }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: "#e5e7eb",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text>Add Photo</Text>
+              </View>
+            )}
+          </Pressable>
 
-        <Pressable
-          onPress={handleChangePhoto}
-          style={{
-            position: "absolute",
-            bottom: 4,
-            right: 4,
-            backgroundColor: "#2563eb",
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff" }}>✎</Text>
-        </Pressable>
+          <Pressable
+            onPress={handleChangePhoto}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              backgroundColor: "#2563eb",
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              borderWidth: 2,
+              borderColor: "#fff",
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 14 }}>✎</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Name */}
@@ -205,74 +224,42 @@ export default function ProfileScreen() {
       <EditableRow
         label="Bio"
         value={form.bio}
-        editing={editingField === "bio"}
+        onChange={(v) => setForm((p) => ({ ...p, bio: v }))}
+        editable
         multiline
-        onEdit={() => setEditingField("bio")}
-        onChange={(v) =>
-          setForm((prev) => ({
-            ...prev,
-            bio: v,
-          }))
-        }
       />
 
       <EditableRow
         label="Date of Birth"
         value={formatDateDDMMYYYY(form.dateOfBirth)}
-        editing={false}
-        onEdit={() => setShowDatePicker(true)}
+        onPress={() => setShowDatePicker(true)}
       />
 
       <EditableRow
         label="Gender"
-        value={form.gender}
-        editing={editingField === "gender"}
-        onEdit={() => setEditingField("gender")}
-        onChange={(v) =>
-          setForm((prev) => ({
-            ...prev,
-            gender: v,
-          }))
-        }
+        value={getGenderLabel(form.gender)}
+        onPress={() => setGenderModalVisible(true)}
       />
 
       <EditableRow
         label="City"
         value={form.city}
-        editing={editingField === "city"}
-        onEdit={() => setEditingField("city")}
-        onChange={(v) =>
-          setForm((prev) => ({
-            ...prev,
-            city: v,
-          }))
-        }
+        onChange={(v) => setForm((p) => ({ ...p, city: v }))}
+        editable
       />
 
       <EditableRow
         label="Location"
         value={form.location}
-        editing={editingField === "location"}
-        onEdit={() => setEditingField("location")}
-        onChange={(v) =>
-          setForm((prev) => ({
-            ...prev,
-            location: v,
-          }))
-        }
+        onChange={(v) => setForm((p) => ({ ...p, location: v }))}
+        editable
       />
 
       <EditableRow
         label="Nationality"
         value={form.nationality}
-        editing={editingField === "nationality"}
-        onEdit={() => setEditingField("nationality")}
-        onChange={(v) =>
-          setForm((prev) => ({
-            ...prev,
-            nationality: v,
-          }))
-        }
+        onChange={(v) => setForm((p) => ({ ...p, nationality: v }))}
+        editable
       />
 
       {dirty && (
@@ -300,14 +287,45 @@ export default function ProfileScreen() {
           onChange={(_, date) => {
             setShowDatePicker(false);
             if (date) {
-              setForm((prev) => ({
-                ...prev,
+              setForm((p) => ({
+                ...p,
                 dateOfBirth: date.toISOString().split("T")[0],
               }));
             }
           }}
         />
       )}
+
+      <Modal visible={genderModalVisible} transparent animationType="fade">
+        <Pressable
+          onPress={() => setGenderModalVisible(false)}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            padding: 30,
+          }}
+        >
+          <View style={{ backgroundColor: "#fff", borderRadius: 12 }}>
+            {GENDER_OPTIONS.map((g) => (
+              <Pressable
+                key={g.value}
+                onPress={() => {
+                  setForm((p) => ({ ...p, gender: g.value }));
+                  setGenderModalVisible(false);
+                }}
+                style={{
+                  padding: 16,
+                  borderBottomWidth: 1,
+                  borderColor: "#e5e7eb",
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>{g.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
 
       <Modal visible={previewVisible} transparent>
         <View
@@ -336,48 +354,70 @@ export default function ProfileScreen() {
   );
 }
 
+/* -------------------- Editable Row -------------------- */
+
 function EditableRow({
   label,
   value,
-  editing,
-  onEdit,
+  editable,
   onChange,
+  onPress,
   multiline,
 }: {
   label: string;
   value?: string | null;
-  editing: boolean;
-  onEdit: () => void;
+  editable?: boolean;
   onChange?: (v: string) => void;
+  onPress?: () => void;
   multiline?: boolean;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  if (!editable) {
+    return (
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ fontSize: 12, color: "#6b7280" }}>{label}</Text>
+        <Pressable onPress={onPress}>
+          <Text style={{ fontSize: 16 }}>{value || "—"}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={{ fontSize: 12, color: "#6b7280" }}>{label}</Text>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {editing ? (
-          <TextInput
-            value={value ?? ""}
-            onChangeText={onChange}
-            multiline={multiline}
+      {isEditing ? (
+        <TextInput
+          ref={inputRef}
+          value={value ?? ""}
+          onChangeText={onChange}
+          multiline={multiline}
+          autoFocus
+          onBlur={() => setIsEditing(false)}
+          style={{
+            borderWidth: 1,
+            borderColor: "#d1d5db",
+            borderRadius: 8,
+            padding: 8,
+            fontSize: 16,
+          }}
+        />
+      ) : (
+        <Pressable onPress={() => setIsEditing(true)}>
+          <Text
             style={{
-              flex: 1,
-              borderWidth: 1,
-              borderColor: "#d1d5db",
-              borderRadius: 8,
-              padding: 8,
               fontSize: 16,
+              minHeight: 40,
+              textAlignVertical: "center",
             }}
-          />
-        ) : (
-          <Text style={{ flex: 1, fontSize: 16 }}>{value || "—"}</Text>
-        )}
-
-        <Pressable onPress={onEdit}>
-          <Text style={{ fontSize: 16, marginLeft: 8 }}>✎</Text>
+          >
+            {value || "—"}
+          </Text>
         </Pressable>
-      </View>
+      )}
     </View>
   );
 }

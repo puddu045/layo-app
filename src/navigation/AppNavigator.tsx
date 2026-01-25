@@ -3,7 +3,6 @@ import JourneysListScreen from "../screens/journeys/JourneyListScreen";
 import JourneyTabsScreen from "./JourneyTabsScreen";
 import AddJourneyScreen from "../screens/journeys/AddJourneyScreen";
 import ProfileListScreen from "../screens/profile/ProfileScreen";
-import EditProfileScreen from "../screens/profile/EditProfileScreen";
 import { Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { logout } from "../utils/logout";
@@ -73,14 +72,6 @@ export default function AppNavigator({ navigation }: any) {
               <Ionicons name="log-out-outline" size={22} color="#2563eb" />
             </Pressable>
           ),
-        }}
-      />
-      <Stack.Screen
-        name="EditProfile"
-        component={EditProfileScreen}
-        options={{
-          headerShown: true,
-          headerTitleAlign: "center",
         }}
       />
     </Stack.Navigator>
