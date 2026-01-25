@@ -9,11 +9,10 @@ import { useJourneyStore } from "../../store/journey.store";
 import { getJourneysForUser } from "../../api/journeys.api";
 import { useCallback, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { useAuthStore } from "../../store/auth.store";
+import { colors } from "../../theme/colors";
 
 export default function JourneyListScreen({ navigation }: any) {
   const { journeys, setJourneys, setLoading } = useJourneyStore();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const loadJourneys = async () => {
     try {
@@ -32,7 +31,7 @@ export default function JourneyListScreen({ navigation }: any) {
   useFocusEffect(
     useCallback(() => {
       loadJourneys();
-    }, [])
+    }, []),
   );
 
   function formatDateTime(iso: string) {
@@ -61,30 +60,6 @@ export default function JourneyListScreen({ navigation }: any) {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#f5f6f8", marginTop: 20 }}
     >
-      {/* Header
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 18,
-          flexDirection: "row",
-          alignItems: "center",
-          marginBottom: 25,
-        }}
-      >
-        <View style={{ flex: 1 }} />
-        <Text style={{ textAlign: "center", fontSize: 20, fontWeight: "600" }}>
-          My Journeys
-        </Text>
-        <View style={{ flex: 1, alignItems: "flex-end" }}>
-          <Pressable
-            onPress={() => navigation.navigate("Profile")}
-            hitSlop={10}
-          >
-            <Ionicons name="log-out-outline" size={22} color="#2563eb" />
-          </Pressable>
-        </View>
-      </View>
- */}
       <FlatList
         data={journeys}
         keyExtractor={(item) => item.id}
@@ -108,24 +83,6 @@ export default function JourneyListScreen({ navigation }: any) {
                   elevation: 3,
                 }}
               >
-                {/* Journey summary line */}
-                <View
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingTop: 10,
-                    paddingBottom: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "600",
-                      color: "#0f172a",
-                    }}
-                  >
-                    {item.departureAirport} → {item.arrivalAirport}
-                  </Text>
-                </View>
                 {legs.map((leg, index) => {
                   const isLastLeg = index === legs.length - 1;
                   const nextLeg = !isLastLeg ? legs[index + 1] : null;
@@ -137,10 +94,7 @@ export default function JourneyListScreen({ navigation }: any) {
                     <View
                       key={leg.id}
                       style={{
-                        flexDirection: "row",
-                        marginHorizontal: 12,
-                        marginTop: 12,
-                        position: "relative",
+                        margin: 10,
                       }}
                     >
                       {/* Timeline column */}
@@ -149,32 +103,7 @@ export default function JourneyListScreen({ navigation }: any) {
                           width: 28,
                           alignItems: "center",
                         }}
-                      >
-                        {/* Dot */}
-                        <View
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: "#2563eb",
-                            marginTop: 6,
-                          }}
-                        />
-
-                        {/* Line to next item */}
-                        {!isLastLeg && (
-                          <View
-                            style={{
-                              flex: 1,
-                              width: 1,
-                              borderStyle: "dotted",
-                              borderWidth: 1,
-                              borderColor: "#cbd5e1",
-                              marginTop: 4,
-                            }}
-                          />
-                        )}
-                      </View>
+                      ></View>
 
                       {/* Content column */}
                       <View style={{ flex: 1 }}>
@@ -188,7 +117,7 @@ export default function JourneyListScreen({ navigation }: any) {
                           }}
                         >
                           <Text style={{ fontSize: 15, fontWeight: "600" }}>
-                            {leg.flightNumber}
+                            Flight Number : {leg.flightNumber}
                           </Text>
 
                           <Text style={{ marginTop: 4 }}>
@@ -273,7 +202,7 @@ export default function JourneyListScreen({ navigation }: any) {
         <Pressable
           onPress={() => navigation.navigate("AddJourney")}
           style={{
-            backgroundColor: "#2563eb",
+            backgroundColor: colors.primary,
             paddingHorizontal: 24,
             paddingVertical: 12,
             borderRadius: 24,

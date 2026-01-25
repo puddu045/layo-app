@@ -1,9 +1,10 @@
-import { View, Text, Button, TextInput, ImageBackground } from "react-native";
+import { View, Text, TextInput, Pressable } from "react-native";
 import { loginApi } from "../../api/auth.api";
 import { useAuthStore } from "../../store/auth.store";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { connectSocket } from "../../socket/socket";
+import { colors } from "../../theme/colors";
 
 export default function LoginScreen() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -35,8 +36,6 @@ export default function LoginScreen() {
         padding: 16,
       }}
     >
-      <Text style={{ fontSize: 18, marginBottom: 16 }}>Login</Text>
-
       {error ? (
         <Text style={{ color: "red", marginBottom: 12 }}>{error}</Text>
       ) : null}
@@ -60,10 +59,29 @@ export default function LoginScreen() {
         style={inputStyle}
       />
 
-      <Button title="Login" onPress={handleLogin} />
+      <Pressable
+        onPress={handleLogin}
+        style={{
+          backgroundColor: colors.primary,
+          paddingVertical: 14,
+          borderRadius: 8,
+          alignItems: "center",
+          marginTop: 8,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.buttonText,
+            fontSize: 16,
+            fontWeight: "600",
+          }}
+        >
+          Login
+        </Text>
+      </Pressable>
 
       <Text
-        style={{ marginTop: 16, color: "blue", textAlign: "center" }}
+        style={{ marginTop: 16, color: colors.primary, textAlign: "center" }}
         onPress={() => navigation.navigate("Register")}
       >
         Don’t have an account? Register

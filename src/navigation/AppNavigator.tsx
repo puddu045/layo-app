@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { logout } from "../utils/logout";
 import { useUserProfileStore } from "../store/profile.store";
 import { URL_Backend } from "../utils/backendURL";
+import { colors } from "../theme/colors";
 
 const Stack = createNativeStackNavigator();
 
@@ -43,7 +44,7 @@ export default function AppNavigator({ navigation }: any) {
                 <Ionicons
                   name="person-circle-outline"
                   size={26}
-                  color="#2563eb"
+                  color={colors.primary}
                 />
               )}
             </Pressable>
@@ -69,7 +70,11 @@ export default function AppNavigator({ navigation }: any) {
           headerTitleAlign: "center",
           headerRight: () => (
             <Pressable onPress={logout} style={{ marginRight: 16 }}>
-              <Ionicons name="log-out-outline" size={22} color="#2563eb" />
+              <Ionicons
+                name="log-out-outline"
+                size={22}
+                color={colors.primary}
+              />
             </Pressable>
           ),
         }}

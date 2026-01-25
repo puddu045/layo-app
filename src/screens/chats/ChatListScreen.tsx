@@ -67,6 +67,7 @@ export default function ChatListScreen({ navigation, route }: any) {
             navigation.navigate("Chat", {
               chatId: item.id,
               name: firstName,
+              profilePhotoUrl: item.otherUserProfilePhotoUrl ?? null,
             });
           }}
         />

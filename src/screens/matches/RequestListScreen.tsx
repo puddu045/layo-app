@@ -7,7 +7,8 @@ import {
   rejectMatch,
 } from "../../api/matches.api";
 import { useAuthStore } from "../../store/auth.store";
-import { URL_Backend } from "../../utils/backendURL";
+import { UserMatchCard } from "../../components/UserMatchCard";
+import { buildFlightText, buildLayoverText } from "../../utils/matchText";
 
 /* ---------- Helpers ---------- */
 
@@ -140,185 +141,40 @@ export default function RequestListScreen({ route }: any) {
       keyExtractor={(item) => item.user.id}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => {
-        console.log("REQUEST ITEM DEBUG", JSON.stringify(item, null, 2));
-
         const { user, requests } = item;
 
-        /* ---------- Collect legs ---------- */
-
         const senderLegs = requests.flatMap((r) => r.senderJourney.legs ?? []);
-
         const myLegs = requests[0].receiverJourney.legs ?? [];
 
-        /* ---------- Same-flight text ---------- */
-
-        const flightDescriptions = senderLegs.map((leg) => {
-          return `${leg.flightNumber} on ${formatDate(leg.departureTime)}`;
-        });
-
-        const flightsText =
-          flightDescriptions.length === 1
-            ? flightDescriptions[0]
-            : flightDescriptions.slice(0, -1).join(", ") +
-              " and " +
-              flightDescriptions[flightDescriptions.length - 1];
-
-        /* ---------- Layover matches ---------- */
+        const flightTexts = senderLegs.map(
+          (leg) => `${leg.flightNumber} on ${formatDate(leg.departureTime)}`,
+        );
 
         const layovers = getLayoverMatches(senderLegs, myLegs);
-
-        const layoverDescriptions = layovers.map(
+        const layoverTexts = layovers.map(
           (l) => `${l.airport} airport (${l.overlapMinutes} min overlap)`,
         );
 
-        const layoverLabel =
-          layovers.length === 1
-            ? "Has a layover with you at"
-            : "Has layovers with you at";
-
-        const layoversText =
-          layoverDescriptions.length === 1
-            ? layoverDescriptions[0]
-            : layoverDescriptions.slice(0, -1).join(", ") +
-              " and " +
-              layoverDescriptions[layoverDescriptions.length - 1];
-
         return (
-          <View
-            style={{
-              padding: 14,
-              marginBottom: 12,
-              backgroundColor: "#fff",
-              borderRadius: 12,
-              elevation: 2,
+          <UserMatchCard
+            user={user}
+            primaryText={buildFlightText(flightTexts)}
+            secondaryText={buildLayoverText(layoverTexts)}
+            onAccept={async () => {
+              await acceptMatch(requests[0].id);
+              setRequestsForJourney(
+                journeyId,
+                requestState.data.filter((r) => r.sender.id !== user.id),
+              );
             }}
-          >
-            {/* Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              {/* Avatar + name */}
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                {user.profile.profilePhotoUrl ? (
-                  <Image
-                    source={{
-                      uri: `${URL_Backend}${user.profile.profilePhotoUrl}`,
-                    }}
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
-                      backgroundColor: "#e5e7eb",
-                      marginRight: 12,
-                    }}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 24,
-                      backgroundColor: "#e5e7eb",
-                      marginRight: 12,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={{ fontWeight: "600", color: "#555" }}>
-                      {user.firstName[0]}
-                      {user.lastName?.[0] ?? ""}
-                    </Text>
-                  </View>
-                )}
-
-                <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                  {user.firstName} {user.lastName}
-                </Text>
-              </View>
-
-              {/* Actions */}
-              <View style={{ flexDirection: "row" }}>
-                <Pressable
-                  onPress={async () => {
-                    await rejectMatch(requests[0].id);
-                    setRequestsForJourney(
-                      journeyId,
-                      requestState.data.filter((r) => r.sender.id !== user.id),
-                    );
-                  }}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: "#fee2e2",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginRight: 10,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#dc2626",
-                      fontSize: 18,
-                      fontWeight: "700",
-                    }}
-                  >
-                    ✕
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={async () => {
-                    await acceptMatch(requests[0].id);
-                    setRequestsForJourney(
-                      journeyId,
-                      requestState.data.filter((r) => r.sender.id !== user.id),
-                    );
-                  }}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
-                    backgroundColor: "#dcfce7",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#16a34a",
-                      fontSize: 18,
-                      fontWeight: "700",
-                    }}
-                  >
-                    ✓
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Same-flight info */}
-            {senderLegs.length > 0 && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ fontWeight: "500", color: "#333" }}>
-                  Flying with you on {flightsText}
-                </Text>
-              </View>
-            )}
-
-            {/* Layover info */}
-            {layovers.length > 0 && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ fontWeight: "500", color: "#333" }}>
-                  {layoverLabel} {layoversText}
-                </Text>
-              </View>
-            )}
-          </View>
+            onReject={async () => {
+              await rejectMatch(requests[0].id);
+              setRequestsForJourney(
+                journeyId,
+                requestState.data.filter((r) => r.sender.id !== user.id),
+              );
+            }}
+          />
         );
       }}
     />

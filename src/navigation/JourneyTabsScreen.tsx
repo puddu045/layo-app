@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image, Pressable } from "react-native";
 import { useUserProfileStore } from "../store/profile.store";
 import { URL_Backend } from "../utils/backendURL";
+import { colors } from "../theme/colors";
 
 import ChatsStack from "./ChatsStack";
 
@@ -18,6 +19,8 @@ export default function JourneyTabsScreen({ navigation, route }: any) {
     <Tab.Navigator
       initialRouteName="ChatStack"
       screenOptions={{
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabInactive,
         headerTitleAlign: "center",
         headerRight: () => (
           <Pressable
@@ -40,7 +43,7 @@ export default function JourneyTabsScreen({ navigation, route }: any) {
               <Ionicons
                 name="person-circle-outline"
                 size={26}
-                color="#2563eb"
+                color={colors.primary}
               />
             )}
           </Pressable>

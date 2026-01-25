@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { colors } from "../../theme/colors";
+
 import {
   FlatList,
   Text,
@@ -34,7 +36,7 @@ export default function ChatScreen({ route }: any) {
   const keyboardVerticalOffset =
     Platform.OS === "ios" ? headerHeight + insets.top : 100;
 
-  const { chatId } = route.params;
+  const { chatId, name, profilePhotoUrl } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -177,14 +179,18 @@ export default function ChatScreen({ route }: any) {
       <View
         style={{
           alignSelf: isMe ? "flex-end" : "flex-start",
-          backgroundColor: isMe ? "#1e90ff" : "#e5e5ea",
+          backgroundColor: isMe ? colors.chatMineBg : colors.chatOtherBg,
           padding: 10,
           borderRadius: 12,
           marginVertical: 4,
           maxWidth: "75%",
         }}
       >
-        <Text style={{ color: isMe ? "#fff" : "#000" }}>{item.content}</Text>
+        <Text
+          style={{ color: isMe ? colors.chatMineText : colors.chatOtherText }}
+        >
+          {item.content}
+        </Text>
       </View>
     );
   }
@@ -194,7 +200,7 @@ export default function ChatScreen({ route }: any) {
     <KeyboardAvoidingView
       style={{
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: colors.background,
       }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       // If you have a top header, you MUST use this offset (adjust 90 as needed)
@@ -207,7 +213,7 @@ export default function ChatScreen({ route }: any) {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 12, paddingBottom: 25 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 25 }}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
         }
@@ -244,7 +250,7 @@ export default function ChatScreen({ route }: any) {
         <TouchableOpacity onPress={onSend} style={{ marginLeft: 8 }}>
           <Text
             style={{
-              color: "#1e90ff",
+              color: colors.primary,
               fontWeight: "bold",
               paddingHorizontal: 10,
             }}

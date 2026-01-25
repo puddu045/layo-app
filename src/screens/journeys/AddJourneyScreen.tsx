@@ -12,6 +12,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import AirportAutocomplete from "../../components/AirportAutocomplete";
 import { createJourney } from "../../api/journeys.api";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "../../theme/colors";
 
 type Leg = {
   sequence: number;
@@ -55,7 +56,7 @@ export default function AddJourneyScreen({ navigation }: any) {
     setLegs((prev) =>
       prev
         .filter((_, i) => i !== index)
-        .map((l, i) => ({ ...l, sequence: i + 1 }))
+        .map((l, i) => ({ ...l, sequence: i + 1 })),
     );
   };
 
@@ -234,7 +235,7 @@ export default function AddJourneyScreen({ navigation }: any) {
                 onPress={addLeg}
                 style={{
                   borderWidth: 1,
-                  borderColor: "#2563eb",
+                  borderColor: colors.primary,
                   padding: 12,
                   borderRadius: 10,
                   marginBottom: 16,
@@ -242,7 +243,7 @@ export default function AddJourneyScreen({ navigation }: any) {
               >
                 <Text
                   style={{
-                    color: "#2563eb",
+                    color: colors.primary,
                     textAlign: "center",
                     fontWeight: "600",
                   }}
@@ -254,7 +255,7 @@ export default function AddJourneyScreen({ navigation }: any) {
               <Pressable
                 onPress={submit}
                 style={{
-                  backgroundColor: "#2563eb",
+                  backgroundColor: colors.primary,
                   padding: 14,
                   borderRadius: 10,
                 }}

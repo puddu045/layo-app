@@ -18,6 +18,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import api from "../../api/client";
 import { URL_Backend } from "../../utils/backendURL";
 import { useUserProfileStore } from "../../store/profile.store";
+import { colors } from "../../theme/colors";
 
 /* -------------------- Gender Enum Mapping -------------------- */
 
@@ -154,7 +155,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
               position: "absolute",
               bottom: 0,
               right: 0,
-              backgroundColor: "#2563eb",
+              backgroundColor: colors.primary,
               width: 32,
               height: 32,
               borderRadius: 16,
@@ -267,7 +268,7 @@ export default function ProfileScreen() {
           onPress={handleSave}
           style={{
             marginTop: 30,
-            backgroundColor: "#2563eb",
+            backgroundColor: colors.primary,
             paddingVertical: 14,
             borderRadius: 28,
             alignItems: "center",
