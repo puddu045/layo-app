@@ -10,7 +10,7 @@ export const colors = {
   chatOtherBg: "#B8DDDC",
   chatOtherText: "#000000",
 
-  background: "#fff",
+  background: "#e5e7eb",
   border: "#e5e7eb",
 
   tabInactive: "#9ca3af",

@@ -11,7 +11,6 @@ import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AirportAutocomplete from "../../components/AirportAutocomplete";
 import { createJourney } from "../../api/journeys.api";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../theme/colors";
 
 type Leg = {
@@ -23,6 +22,15 @@ type Leg = {
   arrivalTime?: string;
 };
 
+type FieldError = {
+  flightNumber?: string;
+  departureAirport?: string;
+  arrivalAirport?: string;
+  departureTime?: string;
+  arrivalTime?: string;
+  timeline?: string;
+};
+
 type PickerState = {
   index: number;
   field: "departureTime" | "arrivalTime";
@@ -31,24 +39,82 @@ type PickerState = {
 };
 
 export default function AddJourneyScreen({ navigation }: any) {
-  const [legs, setLegs] = useState<Leg[]>([
-    {
-      sequence: 1,
-      flightNumber: "",
-    },
-  ]);
-
+  const [legs, setLegs] = useState<Leg[]>([{ sequence: 1, flightNumber: "" }]);
+  const [errors, setErrors] = useState<Record<number, FieldError>>({});
   const [pickerState, setPickerState] = useState<PickerState | null>(null);
+
+  /* ---------------- validation ---------------- */
+
+  function validateJourney(): boolean {
+    const now = new Date();
+    const newErrors: Record<number, FieldError> = {};
+
+    legs.forEach((leg, i) => {
+      const e: FieldError = {};
+
+      if (!leg.flightNumber.trim()) {
+        e.flightNumber = "Flight number is required";
+      }
+
+      if (!leg.departureAirport) {
+        e.departureAirport = "Departure airport is required";
+      }
+
+      if (!leg.arrivalAirport) {
+        e.arrivalAirport = "Arrival airport is required";
+      }
+
+      if (
+        leg.departureAirport &&
+        leg.arrivalAirport &&
+        leg.departureAirport === leg.arrivalAirport
+      ) {
+        e.arrivalAirport = "Departure and arrival cannot be the same";
+      }
+
+      if (!leg.departureTime) {
+        e.departureTime = "Departure date & time required";
+      }
+
+      if (!leg.arrivalTime) {
+        e.arrivalTime = "Arrival date & time required";
+      }
+
+      if (leg.departureTime && leg.arrivalTime) {
+        const dep = new Date(leg.departureTime);
+        const arr = new Date(leg.arrivalTime);
+
+        if (dep < now) {
+          e.departureTime = "Departure cannot be in the past";
+        }
+
+        if (arr <= dep) {
+          e.arrivalTime = "Arrival must be after departure";
+        }
+
+        if (i > 0) {
+          const prevArr = new Date(legs[i - 1].arrivalTime!);
+          if (dep < prevArr) {
+            e.timeline = "This leg starts before the previous leg ends";
+          }
+        }
+      }
+
+      if (Object.keys(e).length > 0) {
+        newErrors[i] = e;
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
 
   /* ---------------- helpers ---------------- */
 
   const addLeg = () => {
     setLegs((prev) => [
       ...prev,
-      {
-        sequence: prev.length + 1,
-        flightNumber: "",
-      },
+      { sequence: prev.length + 1, flightNumber: "" },
     ]);
   };
 
@@ -58,22 +124,21 @@ export default function AddJourneyScreen({ navigation }: any) {
         .filter((_, i) => i !== index)
         .map((l, i) => ({ ...l, sequence: i + 1 })),
     );
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
   };
 
   async function submit() {
-    const payload = {
-      journeyType: legs.length > 1 ? "LAYOVER" : "DIRECT",
-      legs: legs.map((l) => ({
-        sequence: l.sequence,
-        flightNumber: l.flightNumber,
-        departureAirport: l.departureAirport,
-        arrivalAirport: l.arrivalAirport,
-        departureTime: l.departureTime,
-        arrivalTime: l.arrivalTime,
-      })),
-    };
+    if (!validateJourney()) return;
 
-    await createJourney(payload);
+    await createJourney({
+      journeyType: legs.length > 1 ? "LAYOVER" : "DIRECT",
+      legs,
+    });
+
     navigation.goBack();
   }
 
@@ -98,6 +163,11 @@ export default function AddJourneyScreen({ navigation }: any) {
       paddingVertical: 6,
       fontSize: 14,
     },
+    error: {
+      color: "#dc2626",
+      fontSize: 12,
+      marginTop: 4,
+    },
     pickerButton: {
       marginTop: 8,
       padding: 12,
@@ -113,80 +183,74 @@ export default function AddJourneyScreen({ navigation }: any) {
   /* ---------------- render ---------------- */
 
   return (
-    <>
-      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
-        <FlatList
-          data={legs}
-          keyExtractor={(item) => item.sequence.toString()}
-          contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
-          ListHeaderComponent={
-            <View>
-              {/* <Text style={{ fontSize: 18, fontWeight: "600" }}>
-                Add Journey
-              </Text> */}
-              <Text style={{ color: "#666", marginTop: 4 }}>
-                Add each flight leg in order
-              </Text>
-            </View>
-          }
-          renderItem={({ item, index }) => (
-            <View style={styles.card}>
-              {/* Header */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                {legs.length > 1 && (
-                  <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                    Leg {item.sequence}
-                  </Text>
-                )}
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "#f5f6f8" }}>
+      <FlatList
+        data={legs}
+        keyExtractor={(item) => item.sequence.toString()}
+        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
+        renderItem={({ item, index }) => {
+          const e = errors[index] || {};
 
-                {index > 0 && (
-                  <Pressable onPress={() => removeLeg(index)}>
-                    <Text style={{ color: "#dc2626", fontSize: 13 }}>
-                      Remove
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+          return (
+            <View style={styles.card}>
+              {legs.length > 1 && (
+                <Text style={{ fontWeight: "600" }}>Leg {item.sequence}</Text>
+              )}
 
               {/* Flight number */}
               <Text style={styles.label}>Flight number</Text>
               <TextInput
-                placeholder="e.g. AI205"
                 value={item.flightNumber}
                 onChangeText={(v) => {
                   const copy = [...legs];
                   copy[index].flightNumber = v;
                   setLegs(copy);
+                  setErrors((p) => ({
+                    ...p,
+                    [index]: { ...p[index], flightNumber: undefined },
+                  }));
                 }}
                 style={styles.input}
               />
+              {e.flightNumber && (
+                <Text style={styles.error}>{e.flightNumber}</Text>
+              )}
 
-              {/* Airports */}
+              {/* Departure airport */}
               <Text style={styles.label}>Departure airport</Text>
               <AirportAutocomplete
-                placeholder="Search airport"
+                placeholder="Search departure airport"
                 onSelect={(a) => {
                   const copy = [...legs];
                   copy[index].departureAirport = a.iata;
                   setLegs(copy);
+                  setErrors((p) => ({
+                    ...p,
+                    [index]: { ...p[index], departureAirport: undefined },
+                  }));
                 }}
               />
+              {e.departureAirport && (
+                <Text style={styles.error}>{e.departureAirport}</Text>
+              )}
 
+              {/* Arrival airport */}
               <Text style={styles.label}>Arrival airport</Text>
               <AirportAutocomplete
-                placeholder="Search airport"
+                placeholder="Search arrival airport"
                 onSelect={(a) => {
                   const copy = [...legs];
                   copy[index].arrivalAirport = a.iata;
                   setLegs(copy);
+                  setErrors((p) => ({
+                    ...p,
+                    [index]: { ...p[index], arrivalAirport: undefined },
+                  }));
                 }}
               />
+              {e.arrivalAirport && (
+                <Text style={styles.error}>{e.arrivalAirport}</Text>
+              )}
 
               {/* Departure time */}
               <Text style={styles.label}>Departure date & time</Text>
@@ -204,9 +268,12 @@ export default function AddJourneyScreen({ navigation }: any) {
                 <Text style={styles.pickerText}>
                   {item.departureTime
                     ? new Date(item.departureTime).toLocaleString()
-                    : "Select date & time"}
+                    : "Select"}
                 </Text>
               </Pressable>
+              {e.departureTime && (
+                <Text style={styles.error}>{e.departureTime}</Text>
+              )}
 
               {/* Arrival time */}
               <Text style={styles.label}>Arrival date & time</Text>
@@ -224,93 +291,93 @@ export default function AddJourneyScreen({ navigation }: any) {
                 <Text style={styles.pickerText}>
                   {item.arrivalTime
                     ? new Date(item.arrivalTime).toLocaleString()
-                    : "Select date & time"}
+                    : "Select"}
                 </Text>
               </Pressable>
+              {e.arrivalTime && (
+                <Text style={styles.error}>{e.arrivalTime}</Text>
+              )}
+              {e.timeline && <Text style={styles.error}>{e.timeline}</Text>}
             </View>
-          )}
-          ListFooterComponent={
-            <View style={{ marginTop: 32 }}>
-              <Pressable
-                onPress={addLeg}
+          );
+        }}
+        ListFooterComponent={
+          <View style={{ marginTop: 32 }}>
+            <Pressable
+              onPress={addLeg}
+              style={{
+                borderWidth: 1,
+                borderColor: colors.primary,
+                padding: 12,
+                borderRadius: 10,
+                marginBottom: 16,
+              }}
+            >
+              <Text
                 style={{
-                  borderWidth: 1,
-                  borderColor: colors.primary,
-                  padding: 12,
-                  borderRadius: 10,
-                  marginBottom: 16,
+                  color: colors.primary,
+                  textAlign: "center",
+                  fontWeight: "600",
                 }}
               >
-                <Text
-                  style={{
-                    color: colors.primary,
-                    textAlign: "center",
-                    fontWeight: "600",
-                  }}
-                >
-                  + Add another leg
-                </Text>
-              </Pressable>
+                + Add another leg
+              </Text>
+            </Pressable>
 
-              <Pressable
-                onPress={submit}
+            <Pressable
+              onPress={submit}
+              style={{
+                backgroundColor: colors.primary,
+                padding: 14,
+                borderRadius: 10,
+              }}
+            >
+              <Text
                 style={{
-                  backgroundColor: colors.primary,
-                  padding: 14,
-                  borderRadius: 10,
+                  color: "#fff",
+                  textAlign: "center",
+                  fontWeight: "600",
                 }}
               >
-                <Text
-                  style={{
-                    color: "#fff",
-                    textAlign: "center",
-                    fontWeight: "600",
-                  }}
-                >
-                  Save Journey
-                </Text>
-              </Pressable>
-            </View>
-          }
-        />
+                Save Journey
+              </Text>
+            </Pressable>
+          </View>
+        }
+      />
 
-        {/* Date → Time picker (Android-safe) */}
-        {pickerState && (
-          <DateTimePicker
-            value={pickerState.tempDate}
-            mode={pickerState.mode}
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(_, selected) => {
-              if (!selected) {
-                setPickerState(null);
-                return;
-              }
-
-              // Step 1: date selected → open time picker
-              if (pickerState.mode === "date") {
-                setPickerState({
-                  ...pickerState,
-                  mode: "time",
-                  tempDate: selected,
-                });
-                return;
-              }
-
-              // Step 2: time selected → merge date + time
-              const finalDate = new Date(pickerState.tempDate);
-              finalDate.setHours(selected.getHours());
-              finalDate.setMinutes(selected.getMinutes());
-
-              const copy = [...legs];
-              copy[pickerState.index][pickerState.field] =
-                finalDate.toISOString();
-
-              setLegs(copy);
+      {pickerState && (
+        <DateTimePicker
+          value={pickerState.tempDate}
+          mode={pickerState.mode}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(_, selected) => {
+            if (!selected) {
               setPickerState(null);
-            }}
-          />
-        )}
-      </KeyboardAvoidingView>
-    </>
+              return;
+            }
+
+            if (pickerState.mode === "date") {
+              setPickerState({
+                ...pickerState,
+                mode: "time",
+                tempDate: selected,
+              });
+              return;
+            }
+
+            const finalDate = new Date(pickerState.tempDate);
+            finalDate.setHours(selected.getHours());
+            finalDate.setMinutes(selected.getMinutes());
+
+            const copy = [...legs];
+            copy[pickerState.index][pickerState.field] =
+              finalDate.toISOString();
+            setLegs(copy);
+            setPickerState(null);
+          }}
+        />
+      )}
+    </KeyboardAvoidingView>
   );
 }

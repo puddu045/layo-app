@@ -200,7 +200,7 @@ export default function ChatScreen({ route }: any) {
     <KeyboardAvoidingView
       style={{
         flex: 1,
-        backgroundColor: colors.background,
+        // backgroundColor: colors.background,
       }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       // If you have a top header, you MUST use this offset (adjust 90 as needed)

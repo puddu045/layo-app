@@ -34,7 +34,6 @@ export default function MatchListScreen({ route }: any) {
     const load = async () => {
       setLoading(true);
       const data = await fetchMatchesByJourney(journeyId);
-      console.log(JSON.stringify(data, null, 2));
       setMatches(data);
     };
 
