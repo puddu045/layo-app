@@ -127,6 +127,7 @@ export type UserSummary = {
   lastName: string;
   profile: {
     profilePhotoUrl?: string | null;
+    updatedAt: string;
   };
 };
 

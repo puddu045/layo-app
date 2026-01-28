@@ -4,14 +4,16 @@ import {
   FlatList,
   Pressable,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { useJourneyStore } from "../../store/journey.store";
-import { getJourneysForUser } from "../../api/journeys.api";
+import { getJourneysForUser, deleteJourney } from "../../api/journeys.api";
 import { useCallback, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors } from "../../theme/colors";
 import airports from "../../../assets/airports_data_new.json";
 import { Ionicons } from "@expo/vector-icons";
+import { useChatStore } from "../../store/chat.store";
 
 type Airport = {
   iata: string;
@@ -21,7 +23,34 @@ type Airport = {
 };
 
 export default function JourneyListScreen({ navigation }: any) {
-  const { journeys, setJourneys, setLoading } = useJourneyStore();
+  const { journeys, removeJourney, setJourneys, setLoading } =
+    useJourneyStore();
+  const { clearChatsForJourney } = useChatStore();
+
+  async function handleDeleteJourney(journeyId: string) {
+    Alert.alert(
+      "Delete journey",
+      "This will remove your matches and chats. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteJourney(journeyId);
+
+              // update local state
+              removeJourney(journeyId);
+              clearChatsForJourney(journeyId);
+            } catch (err) {
+              Alert.alert("Error", "Failed to delete journey");
+            }
+          },
+        },
+      ],
+    );
+  }
 
   const loadJourneys = async () => {
     try {
@@ -68,7 +97,13 @@ export default function JourneyListScreen({ navigation }: any) {
   function formatDuration(mins: number) {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
-    return `${h}h ${m}`;
+
+    // If minutes is 0, only return the hours string
+    if (m === 0) {
+      return `${h}h`;
+    }
+
+    return `${h}h ${m}m`;
   }
 
   function getAirportName(iata?: string) {
@@ -76,6 +111,22 @@ export default function JourneyListScreen({ navigation }: any) {
     const airport = (airports as Airport[]).find((a) => a.iata === iata);
     if (!airport) return "";
     return airport.name;
+  }
+
+  function getDayDiff(startIso: string, endIso: string) {
+    const start = new Date(startIso);
+    const end = new Date(endIso);
+
+    const startDate = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate(),
+    );
+    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    return Math.round(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
   }
 
   return (
@@ -109,22 +160,73 @@ export default function JourneyListScreen({ navigation }: any) {
                   backgroundColor: "#fff",
                   borderRadius: 16,
                   padding: 16,
-                  elevation: 3,
+
+                  // iOS shadow
+                  // shadowColor: colors.primary,
+                  // shadowOffset: { width: 0, height: 2 },
+                  // shadowOpacity: 0.25,
+                  // shadowRadius: 5,
+
+                  // Android shadow
+                  elevation: 5,
                 }}
               >
                 {/* ===== HEADER ===== */}
                 <View style={{ marginBottom: 16 }}>
                   <View
                     style={{
+                      position: "absolute",
+                      top: -3,
+                      right: 1,
+                      zIndex: 10,
+                    }}
+                  >
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation(); // 🔑 prevents navigation
+                        handleDeleteJourney(item.id);
+                      }}
+                      hitSlop={10}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color="#ED5757"
+                        // color={colors.primary}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#64748b",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Outbound: {formatDate(firstLeg.departureTime)}
+                  </Text>
+
+                  <View
+                    style={{
                       flexDirection: "row",
                       justifyContent: "space-between",
+
                       alignItems: "center",
                     }}
                   >
                     <Text style={{ fontSize: 20, fontWeight: "700" }}>
                       {formatTime(firstLeg.departureTime)}
                     </Text>
-                    <View style={{ alignItems: "center" }}>
+                    <View
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        alignItems: "center",
+                        zIndex: -1,
+                      }}
+                    >
                       <Text style={{ fontSize: 12, color: "#6b7280" }}>
                         {formatDuration(totalMinutes)}
                       </Text>
@@ -138,9 +240,47 @@ export default function JourneyListScreen({ navigation }: any) {
                         {stopsCount} stop{stopsCount !== 1 ? "s" : ""}
                       </Text>
                     </View>
-                    <Text style={{ fontSize: 20, fontWeight: "700" }}>
-                      {formatTime(lastLeg.arrivalTime)}
-                    </Text>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      {getDayDiff(firstLeg.departureTime, lastLeg.arrivalTime) >
+                        0 && (
+                        <View
+                          style={{
+                            backgroundColor: "#f1f5f9",
+                            marginRight: 6,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 6,
+                            transform: [{ translateY: -2 }],
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: "600",
+                              color: "#475569",
+                            }}
+                          >
+                            +
+                            {getDayDiff(
+                              firstLeg.departureTime,
+                              lastLeg.arrivalTime,
+                            )}{" "}
+                            day
+                            {getDayDiff(
+                              firstLeg.departureTime,
+                              lastLeg.arrivalTime,
+                            ) > 1
+                              ? "s"
+                              : ""}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={{ fontSize: 20, fontWeight: "700" }}>
+                        {formatTime(lastLeg.arrivalTime)}
+                      </Text>
+                    </View>
                   </View>
 
                   <View
@@ -207,6 +347,16 @@ export default function JourneyListScreen({ navigation }: any) {
 
                   return (
                     <View key={leg.id}>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "600",
+                          color: "#475569",
+                          marginBottom: 4,
+                        }}
+                      >
+                        {leg.flightNumber}
+                      </Text>
                       {/* Departure Row */}
                       <View style={{ flexDirection: "row" }}>
                         <View style={{ width: 24, alignItems: "center" }}>
@@ -219,6 +369,7 @@ export default function JourneyListScreen({ navigation }: any) {
                               marginTop: 6,
                             }}
                           />
+
                           {/* Line starts HERE and goes down to the arrival dot */}
                           <View
                             style={{

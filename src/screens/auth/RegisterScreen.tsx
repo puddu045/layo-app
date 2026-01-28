@@ -10,6 +10,7 @@ import { useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { registerApi } from "../../api/auth.api";
 import { useNavigation } from "@react-navigation/native";
+import { colors } from "../../theme/colors";
 
 export default function RegisterScreen() {
   const navigation = useNavigation<any>();
@@ -84,8 +85,6 @@ export default function RegisterScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16, justifyContent: "center" }}>
-      <Text style={{ fontSize: 18, marginBottom: 16 }}>Register</Text>
-
       {error ? (
         <Text style={{ color: "red", marginBottom: 12 }}>{error}</Text>
       ) : null}
@@ -116,27 +115,6 @@ export default function RegisterScreen() {
         style={inputStyle}
       />
 
-      {/* Date of Birth Picker
-      <Pressable onPress={() => setShowPicker(true)} style={inputStyle}>
-        <Text style={{ color: dateOfBirth ? "#000" : "#999" }}>
-          {dateOfBirth ? formatForDisplay(dateOfBirth) : "Date of birth"}
-        </Text>
-      </Pressable>
-
-      {showPicker && (
-        <DateTimePicker
-          value={dateOfBirth ?? new Date(2000, 0, 1)}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          maximumDate={new Date()}
-          onChange={(_, selectedDate) => {
-            setShowPicker(false);
-            if (selectedDate) setDateOfBirth(selectedDate);
-          }}
-        />
-      )}
-         */}
-
       <TextInput
         placeholder="Password"
         value={password}
@@ -155,10 +133,29 @@ export default function RegisterScreen() {
         style={inputStyle}
       />
 
-      <Button title="Register" onPress={handleRegister} />
+      <Pressable
+        onPress={handleRegister}
+        style={{
+          backgroundColor: colors.primary,
+          paddingVertical: 14,
+          borderRadius: 8,
+          alignItems: "center",
+          marginTop: 8,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.buttonText,
+            fontSize: 16,
+            fontWeight: "600",
+          }}
+        >
+          Register
+        </Text>
+      </Pressable>
 
       <Text
-        style={{ marginTop: 16, color: "blue", textAlign: "center" }}
+        style={{ marginTop: 16, color: colors.primary, textAlign: "center" }}
         onPress={() => navigation.navigate("Login")}
       >
         Already have an account? Login
@@ -173,4 +170,5 @@ const inputStyle = {
   padding: 12,
   marginBottom: 12,
   borderRadius: 6,
+  color: "#000",
 };

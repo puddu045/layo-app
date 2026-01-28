@@ -23,11 +23,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getSocket } from "../../socket/socket";
 import { useFocusEffect } from "@react-navigation/native";
 import { useChatStore } from "../../store/chat.store";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ChatScreen({ route }: any) {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const markChatAsReadInStore = useChatStore((s) => s.markChatAsReadInStore);
+  const [inputHeight, setInputHeight] = useState(44);
 
   const user = useAuthStore((s) => s.user);
   if (!user) return null;
@@ -200,7 +202,7 @@ export default function ChatScreen({ route }: any) {
     <KeyboardAvoidingView
       style={{
         flex: 1,
-        // backgroundColor: colors.background,
+        // backgroundColor: "red",
       }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       // If you have a top header, you MUST use this offset (adjust 90 as needed)
@@ -237,26 +239,44 @@ export default function ChatScreen({ route }: any) {
           value={text}
           onChangeText={setText}
           placeholder="Type a message"
+          multiline
+          textAlignVertical="top"
+          onContentSizeChange={(e) => {
+            const height = e.nativeEvent.contentSize.height;
+            setInputHeight(Math.min(height, 120)); // cap height
+          }}
           style={{
             flex: 1,
             borderWidth: 1,
             borderColor: "#ccc",
             borderRadius: 20,
             paddingHorizontal: 14,
-            paddingVertical: Platform.OS === "ios" ? 12 : 8,
+            paddingTop: 12,
+            paddingBottom: 12,
             backgroundColor: "#f9f9f9",
+            height: inputHeight,
+            maxHeight: 120,
           }}
         />
-        <TouchableOpacity onPress={onSend} style={{ marginLeft: 8 }}>
-          <Text
-            style={{
-              color: colors.primary,
-              fontWeight: "bold",
-              paddingHorizontal: 10,
-            }}
-          >
-            Send
-          </Text>
+
+        <TouchableOpacity
+          onPress={onSend}
+          style={{
+            marginLeft: 8,
+            // backgroundColor: colors.primary,
+            // width: 44,
+            // height: 35,
+            // borderRadius: 22,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Ionicons
+            name="airplane"
+            size={35}
+            color={colors.primary}
+            style={{ marginLeft: 3 }}
+          />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

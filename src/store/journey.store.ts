@@ -31,6 +31,7 @@ type JourneyState = {
   setActiveJourney: (j: Journey) => void;
   clearActiveJourney: () => void;
   setLoading: (v: boolean) => void;
+  removeJourney: (journeyId: string) => void;
 };
 
 export const useJourneyStore = create<JourneyState>((set) => ({
@@ -42,4 +43,10 @@ export const useJourneyStore = create<JourneyState>((set) => ({
   setActiveJourney: (journey) => set({ activeJourney: journey }),
   clearActiveJourney: () => set({ activeJourney: null }),
   setLoading: (loading) => set({ loading }),
+  removeJourney: (journeyId) =>
+    set((state) => ({
+      journeys: state.journeys.filter((j) => j.id !== journeyId),
+      activeJourney:
+        state.activeJourney?.id === journeyId ? null : state.activeJourney,
+    })),
 }));

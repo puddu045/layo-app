@@ -9,11 +9,12 @@ import {
   Platform,
   TextInput,
   Modal,
-  TouchableOpacity,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { BlurView } from "expo-blur";
 
 import api from "../../api/client";
 import { URL_Backend } from "../../utils/backendURL";
@@ -53,11 +54,25 @@ type ProfileForm = {
   dateOfBirth: string | null;
 };
 
+type ImagePreviewData = {
+  uri: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export default function ProfileScreen() {
   const [uploading, setUploading] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [genderModalVisible, setGenderModalVisible] = useState(false);
+  const { width: screenWidth } = useWindowDimensions();
+  const CARD_SIZE = Math.min(screenWidth * 0.9, 600);
+
+  const avatarRef = useRef<View>(null);
+  const [imagePreview, setImagePreview] = useState<ImagePreviewData | null>(
+    null,
+  );
 
   const { user, profile, loading, fetchMyProfile, updateProfile } =
     useUserProfileStore();
@@ -161,199 +176,276 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, padding: 20, backgroundColor: "#fff" }}>
-      {/* Profile Photo */}
-      <View style={{ alignItems: "center", marginBottom: 20 }}>
-        <View style={{ width: 120, height: 120 }}>
-          <Pressable onPress={() => setPreviewVisible(true)}>
-            {profile?.profilePhotoUrl ? (
-              <Image
-                source={{
-                  uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
-                }}
-                style={{ width: 120, height: 120, borderRadius: 60 }}
-              />
-            ) : (
-              <View
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
-                  backgroundColor: "#e5e7eb",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text>Add Photo</Text>
-              </View>
-            )}
-          </Pressable>
+    <>
+      <ScrollView style={{ flex: 1, padding: 20, backgroundColor: "#fff" }}>
+        {/* Profile Photo */}
+        <View style={{ alignItems: "center", marginBottom: 20 }}>
+          <View style={{ width: 120, height: 120 }}>
+            <Pressable
+              ref={avatarRef}
+              onPress={() => {
+                if (!profile?.profilePhotoUrl) return;
 
+                const uri = `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`;
+
+                avatarRef.current?.measureInWindow((x, y, width, height) => {
+                  setImagePreview({
+                    uri,
+                    x,
+                    y,
+                    width,
+                    height,
+                  });
+                });
+              }}
+            >
+              {profile?.profilePhotoUrl ? (
+                <View
+                  style={{
+                    width: 110,
+                    height: 140, // taller than wide = airplane window feel
+                    borderRadius: 40,
+                    backgroundColor: "#e5e7eb", // outer frame
+                    padding: 5,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: 37,
+                      backgroundColor: "#fff",
+                      overflow: "hidden",
+                      shadowColor: "#000",
+                      shadowOpacity: 0.15,
+                      shadowRadius: 3,
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                      }}
+                      resizeMode="cover"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  </View>
+                </View>
+              ) : (
+                // <Image
+                //   source={{
+                //     uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                //   }}
+                //   style={{ width: 120, height: 120, borderRadius: 60 }}
+                // />
+                <View
+                  style={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: 60,
+                    backgroundColor: "#e5e7eb",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text>Add Photo</Text>
+                </View>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={handleChangePhoto}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                backgroundColor: colors.primary,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 2,
+                borderColor: "#fff",
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 14 }}>✎</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Name */}
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "700",
+            textAlign: "center",
+            marginBottom: 20,
+          }}
+        >
+          {user?.firstName} {user?.lastName}
+        </Text>
+
+        <EditableRow
+          label="Bio"
+          value={form.bio}
+          onChange={(v) => setForm((p) => ({ ...p, bio: v }))}
+          editable
+          multiline
+        />
+
+        <EditableRow
+          label="Date of Birth"
+          value={formatDateDDMMYYYY(form.dateOfBirth)}
+          onPress={() => setShowDatePicker(true)}
+        />
+
+        <EditableRow
+          label="Gender"
+          value={getGenderLabel(form.gender)}
+          onPress={() => setGenderModalVisible(true)}
+        />
+
+        <EditableRow
+          label="City"
+          value={form.city}
+          onChange={(v) => setForm((p) => ({ ...p, city: v }))}
+          editable
+        />
+
+        <EditableRow
+          label="Location"
+          value={form.location}
+          onChange={(v) => setForm((p) => ({ ...p, location: v }))}
+          editable
+        />
+
+        <EditableRow
+          label="Nationality"
+          value={form.nationality}
+          onChange={(v) => setForm((p) => ({ ...p, nationality: v }))}
+          editable
+        />
+
+        {dirty && (
           <Pressable
-            onPress={handleChangePhoto}
+            onPress={handleSave}
             style={{
-              position: "absolute",
-              bottom: 0,
-              right: 0,
+              marginTop: 30,
               backgroundColor: colors.primary,
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              justifyContent: "center",
+              paddingVertical: 14,
+              borderRadius: 28,
               alignItems: "center",
-              borderWidth: 2,
-              borderColor: "#fff",
             }}
           >
-            <Text style={{ color: "#fff", fontSize: 14 }}>✎</Text>
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+              Save Changes
+            </Text>
           </Pressable>
-        </View>
-      </View>
+        )}
 
-      {/* Name */}
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "700",
-          textAlign: "center",
-          marginBottom: 20,
-        }}
-      >
-        {user?.firstName} {user?.lastName}
-      </Text>
+        {showDatePicker && (
+          <DateTimePicker
+            value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date()}
+            mode="date"
+            maximumDate={new Date()}
+            onChange={(_, date) => {
+              setShowDatePicker(false);
+              if (date) {
+                setForm((p) => ({
+                  ...p,
+                  dateOfBirth: date.toISOString().split("T")[0],
+                }));
+              }
+            }}
+          />
+        )}
 
-      <EditableRow
-        label="Bio"
-        value={form.bio}
-        onChange={(v) => setForm((p) => ({ ...p, bio: v }))}
-        editable
-        multiline
-      />
-
-      <EditableRow
-        label="Date of Birth"
-        value={formatDateDDMMYYYY(form.dateOfBirth)}
-        onPress={() => setShowDatePicker(true)}
-      />
-
-      <EditableRow
-        label="Gender"
-        value={getGenderLabel(form.gender)}
-        onPress={() => setGenderModalVisible(true)}
-      />
-
-      <EditableRow
-        label="City"
-        value={form.city}
-        onChange={(v) => setForm((p) => ({ ...p, city: v }))}
-        editable
-      />
-
-      <EditableRow
-        label="Location"
-        value={form.location}
-        onChange={(v) => setForm((p) => ({ ...p, location: v }))}
-        editable
-      />
-
-      <EditableRow
-        label="Nationality"
-        value={form.nationality}
-        onChange={(v) => setForm((p) => ({ ...p, nationality: v }))}
-        editable
-      />
-
-      {dirty && (
-        <Pressable
-          onPress={handleSave}
-          style={{
-            marginTop: 30,
-            backgroundColor: colors.primary,
-            paddingVertical: 14,
-            borderRadius: 28,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
-            Save Changes
-          </Text>
-        </Pressable>
-      )}
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date()}
-          mode="date"
-          maximumDate={new Date()}
-          onChange={(_, date) => {
-            setShowDatePicker(false);
-            if (date) {
-              setForm((p) => ({
-                ...p,
-                dateOfBirth: date.toISOString().split("T")[0],
-              }));
-            }
-          }}
-        />
-      )}
-
-      <Modal visible={genderModalVisible} transparent animationType="fade">
-        <Pressable
-          onPress={() => setGenderModalVisible(false)}
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            justifyContent: "center",
-            padding: 30,
-          }}
-        >
-          <View style={{ backgroundColor: "#fff", borderRadius: 12 }}>
-            {GENDER_OPTIONS.map((g) => (
-              <Pressable
-                key={g.value}
-                onPress={() => {
-                  setForm((p) => ({ ...p, gender: g.value }));
-                  setGenderModalVisible(false);
-                }}
-                style={{
-                  padding: 16,
-                  borderBottomWidth: 1,
-                  borderColor: "#e5e7eb",
-                }}
-              >
-                <Text style={{ fontSize: 16 }}>{g.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
-
-      <Modal visible={previewVisible} transparent>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "black",
-            justifyContent: "center",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => setPreviewVisible(false)}
-            style={{ position: "absolute", top: 40, right: 20 }}
+        <Modal visible={genderModalVisible} transparent animationType="fade">
+          <Pressable
+            onPress={() => setGenderModalVisible(false)}
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              justifyContent: "center",
+              padding: 30,
+            }}
           >
-            <Text style={{ color: "white" }}>Close</Text>
-          </TouchableOpacity>
-
-          {profile?.profilePhotoUrl && (
-            <Image
-              source={{
-                uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+            <View style={{ backgroundColor: "#fff", borderRadius: 12 }}>
+              {GENDER_OPTIONS.map((g) => (
+                <Pressable
+                  key={g.value}
+                  onPress={() => {
+                    setForm((p) => ({ ...p, gender: g.value }));
+                    setGenderModalVisible(false);
+                  }}
+                  style={{
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderColor: "#e5e7eb",
+                  }}
+                >
+                  <Text style={{ fontSize: 16 }}>{g.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </Pressable>
+        </Modal>
+      </ScrollView>
+      {imagePreview && (
+        <>
+          {/* Backdrop */}
+          <Pressable
+            onPress={() => setImagePreview(null)}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 50,
+            }}
+          >
+            <BlurView
+              intensity={85}
+              tint="dark"
+              style={{
+                flex: 1,
               }}
-              style={{ width: "100%", height: "80%", resizeMode: "contain" }}
             />
-          )}
-        </View>
-      </Modal>
-    </ScrollView>
+          </Pressable>
+
+          {/* Pop-out image card */}
+          <View
+            style={{
+              position: "absolute",
+              top: imagePreview.y + imagePreview.height - 30,
+              left: (screenWidth - CARD_SIZE) / 2,
+              width: CARD_SIZE,
+              height: CARD_SIZE,
+              backgroundColor: "#fff",
+              borderRadius: 14,
+              overflow: "hidden",
+              zIndex: 100,
+              elevation: 12, // Android
+              shadowColor: "#000",
+              shadowOpacity: 0.25,
+              shadowRadius: 8,
+            }}
+          >
+            <Image
+              source={{ uri: imagePreview.uri }}
+              resizeMode="cover"
+              style={{ width: "100%", height: "100%" }}
+            />
+          </View>
+        </>
+      )}
+    </>
   );
 }
 

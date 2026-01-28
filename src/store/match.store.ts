@@ -6,7 +6,7 @@ export type User = {
   id: string;
   firstName: string;
   lastName: string;
-  profile: { profilePhotoUrl?: string | null };
+  profile: { profilePhotoUrl?: string | null; updatedAt: string };
 };
 
 export type Journey = {

@@ -8,6 +8,7 @@ export type ChatSummary = {
   createdAt: string;
   unreadCount: number;
   otherUserProfilePhotoUrl?: string | null;
+  otherUserProfileUpdatedAt?: string;
 
   lastMessage: {
     id: string;

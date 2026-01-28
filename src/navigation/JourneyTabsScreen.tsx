@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MatchListScreen from "../screens/matches/MatchListScreen";
 import RequestListScreen from "../screens/matches/RequestListScreen";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Pressable } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { useUserProfileStore } from "../store/profile.store";
 import { URL_Backend } from "../utils/backendURL";
 import { colors } from "../theme/colors";
@@ -29,16 +29,41 @@ export default function JourneyTabsScreen({ navigation, route }: any) {
             style={{ marginRight: 16 }}
           >
             {profile?.profilePhotoUrl ? (
-              <Image
-                source={{
-                  uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
-                }}
+              <View
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
+                  width: 44,
+                  height: 56, // taller than wide = airplane window feel
+                  borderRadius: 22,
+                  backgroundColor: "#e5e7eb", // outer frame
+                  padding: 3,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-              />
+              >
+                <View
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 18,
+                    backgroundColor: "#fff",
+                    overflow: "hidden",
+                    shadowColor: "#000",
+                    shadowOpacity: 0.15,
+                    shadowRadius: 3,
+                  }}
+                >
+                  <Image
+                    source={{
+                      uri: `${URL_Backend}${profile.profilePhotoUrl}?v=${profile.updatedAt}`,
+                    }}
+                    resizeMode="cover"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  />
+                </View>
+              </View>
             ) : (
               <Ionicons
                 name="person-circle-outline"
