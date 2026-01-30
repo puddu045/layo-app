@@ -30,10 +30,13 @@
     },
     "extra": {
       "eas": {
-        "projectId": "c52b079a-c683-401b-be34-b6645920ddd5"
+        "projectId": "8150da2e-01dc-4152-8807-80a0e73dbf95"
       }
     },
-    "plugins": ["expo-font", "@react-native-community/datetimepicker"],
+    "plugins": [
+      "expo-font",
+      "@react-native-community/datetimepicker"
+    ],
     "owner": "puddu045"
   }
 }
